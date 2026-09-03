@@ -8,11 +8,11 @@ import {
   BriefcaseMedical,
   User,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { MedicineBottle } from "@/components/MedicineBottle";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Card, CardContent } from "../components/ui/card";
+import { MedicineBottle } from "../components/MedicineBottle";
 
 const BRAND = "#0061A5";
 const BTN_CLR = "#0D99FF";
