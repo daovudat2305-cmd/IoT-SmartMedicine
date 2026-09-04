@@ -23,7 +23,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           className="flex-1 overflow-auto"
           style={{
             marginLeft: SIDEBAR_W,
-            background: "#fff",
+            background: "#F3F8FD",
             minHeight: "calc(100vh - 56px)", // trừ chiều cao Header
           }}
         >

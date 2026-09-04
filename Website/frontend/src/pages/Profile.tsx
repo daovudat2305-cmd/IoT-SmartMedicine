@@ -126,7 +126,7 @@ const Profile: React.FC = () => {
                 rel="noreferrer"
                 className="block group no-underline"
               >
-                <Card className="flex flex-row items-center justify-between rounded-xl bg-[#F4F8FB] border border-slate-100/90 p-3 transition-all duration-200 group-hover:bg-white group-hover:shadow-sm group-hover:border-slate-200">
+                <Card className="flex flex-row items-center justify-between rounded-xl bg-white border border-slate-200 p-3 transition-all duration-200 group-hover:shadow-md group-hover:border-slate-300">
                   {/* Left: Icon + Content */}
                   <div className="flex items-center gap-3 min-w-0 pr-2">
                     <div

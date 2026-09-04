@@ -8,10 +8,10 @@ import {
 } from "lucide-react";
 import { Button } from "../ui/button";
 
-const BRAND = "#0055A5";
-const ICON_FG = "#4B5563";
-const IN_BD = "#E2E8F0";
-const ACTIVE_BG = "#BDDEFF";
+const BRAND = "#004080";
+const ICON_FG = "#2D5078";
+const IN_BD = "#D0DCEC";
+const ACTIVE_BG = "#93C5FD";
 
 // Danh sách menu
 const NAV_ITEMS = [
@@ -40,7 +40,7 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
         top: 56,
         width,
         height: "calc(100vh - 56px)",
-        background: "#fff",
+        background: "#F7FBFF",
         borderColor: IN_BD,
       }}
     >
@@ -55,12 +55,12 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-150",
                 isActive
                   ? `font-semibold`
-                  : "font-normal hover:bg-[#D9E8F5] hover:text-[#003870]",
+                  : "font-normal hover:bg-[#BDD6EE] hover:text-[#002D6A]",
               ].join(" ")
             }
             style={({ isActive }) => ({
               ...(isActive
-                ? { background: ACTIVE_BG, color: "#004080" }
+                ? { background: ACTIVE_BG, color: "#003270" }
                 : { color: ICON_FG }),
             })}
           >
@@ -79,7 +79,7 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start gap-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-100"
+          className="w-full justify-start gap-2 text-sm font-semibold text-red-700 bg-red-100 hover:text-red-800 hover:bg-red-200"
         >
           <LogOut size={16} />
           Đăng xuất
