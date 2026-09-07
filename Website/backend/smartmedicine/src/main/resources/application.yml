@@ -1,3 +1,37 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
 spring:
   application:
     name: SmartMedicine
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/smart_medicine
+    username: admin
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+mqtt:
+  broker-url: tcp://localhost:1883
+  client-id: smartmedicine_backend_service
+  username: ""
+  password: ""
+  timeout: 10
+  keepalive: 60
+  topics:
+    sensor-data: sensor_data
+    device-control: device_control
+    device_response: device_response
+    device-status-req: device_status_req
+    device-status-res: device_status_res
