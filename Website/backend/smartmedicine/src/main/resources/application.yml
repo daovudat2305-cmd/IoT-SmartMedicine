@@ -8,8 +8,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/smart_medicine
-    username: admin
-    password: root
+    username: root
+    password: admin
 
   jpa:
     hibernate:

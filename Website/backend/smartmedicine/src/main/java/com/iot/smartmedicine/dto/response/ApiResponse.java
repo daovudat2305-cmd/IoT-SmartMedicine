@@ -26,6 +26,16 @@ public class ApiResponse<T> {
             .build();
     }
 
+    public static <T> ApiResponse<T> success(int code, T data, String message) {
+        return ApiResponse.<T>builder()
+            .success(true)
+            .code(code)
+            .message(message)
+            .data(data)
+            .timestamp(System.currentTimeMillis())
+            .build();
+    }
+
     public static <T> ApiResponse<T> error(int code, String message) {
         return ApiResponse.<T>builder()
             .success(false)
