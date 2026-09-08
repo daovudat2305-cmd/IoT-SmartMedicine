@@ -26,5 +26,7 @@ public class User {
     private String docs;
     private String figma;
     private String github;
+
+    @Column (name = "api_docs")
     private String apiDocs;
 }
