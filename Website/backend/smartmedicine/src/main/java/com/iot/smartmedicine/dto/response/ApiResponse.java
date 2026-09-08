@@ -35,4 +35,14 @@ public class ApiResponse<T> {
             .timestamp(System.currentTimeMillis())
             .build();
     }
+
+    public static <T> ApiResponse<T> error(int code, String message, T data) {
+        return ApiResponse.<T>builder()
+            .success(false)
+            .code(code)
+            .message(message)
+            .data(data)
+            .timestamp(System.currentTimeMillis())
+            .build();
+    }
 }
