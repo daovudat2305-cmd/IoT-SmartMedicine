@@ -3,9 +3,9 @@
 #include<DHT.h>
 #include<ArduinoJson.h>
 
-const char* ssid = "p401";
-const char* password = "401401401";
-const char* mqtt_server = "192.168.10.59";
+const char* ssid = "Datthem :>"; //"Datthem :>"
+const char* password = "@bakhongkhonghai"; //"@bakhongkhonghai"
+const char* mqtt_server = "172.20.10.2"; //172.20.10.2, 192.168.10.97
 
 //cấu hình chân cắm
 #define DHTPIN 15
@@ -20,6 +20,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 unsigned long lastMsg = 0;
+unsigned long lastReconnectAttempt = 0;
 
 //kết nối wifi
 void setup_wifi() {
@@ -51,80 +52,50 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println("Nội dung: " + messageTemp);
 
-  if(String(topic) == "device_control") {
-    //đọc json
+  String topicStr = String(topic);
+
+  if(topicStr.startsWith("device_control/")) {
+    String device_id = topicStr.substring(15);
+
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, messageTemp);
 
-    if(error) {
+    if (error) {
       Serial.print("Phân tích JSON thất bại: ");
       Serial.println(error.c_str());
       return;
     }
 
-    boolean success = true;
-    String errorMessage = "hardware_failure:";
-
-    //led 1
-    if(doc.containsKey("led1")) {
-      String led1Status = doc["led1"];
-      if(led1Status == "ON") digitalWrite(LED1_PIN, HIGH);
-      else if(led1Status == "OFF") digitalWrite(LED1_PIN, LOW);
-      
-      delay(10);
-      String actual = (digitalRead(LED1_PIN) == HIGH) ? "ON" : "OFF";
-      if(led1Status != actual) {
-        success = false;
-        errorMessage += "led1_";
-      }
-    }
-
-    //led 2
-    if(doc.containsKey("led2")) {
-      String led2Status = doc["led2"];
-      if(led2Status == "ON") digitalWrite(LED2_PIN, HIGH);
-      else if(led2Status == "OFF") digitalWrite(LED2_PIN, LOW);
-      
-      delay(10);
-      String actual = (digitalRead(LED2_PIN) == HIGH) ? "ON" : "OFF";
-      if(led2Status != actual) {
-        success = false;
-        errorMessage += "led2_";
-      }
-    }
-
-    //led 3
-    if(doc.containsKey("led3")) {
-      String led3Status = doc["led3"];
-      if(led3Status == "ON") digitalWrite(LED3_PIN, HIGH);
-      else if(led3Status == "OFF") digitalWrite(LED3_PIN, LOW);
-      
-      delay(10);
-      String actual = (digitalRead(LED3_PIN) == HIGH) ? "ON" : "OFF";
-      if(led3Status != actual) {
-        success = false;
-        errorMessage += "led3_";
-      }
-    }
+    String action = doc["action"]; // "ON" hoặc "OFF"
+    String status = "FAILED";      // Mặc định là lỗi, nếu bật thành công sẽ đổi thành SUCCESS/ON
     
-    if(!success) {
-      errorMessage.remove(errorMessage.length() - 1);
+    // Áp dụng hành động dựa theo device_id
+    if (device_id == "led1") {
+      digitalWrite(LED1_PIN, (action == "ON") ? HIGH : LOW);
+      status = (digitalRead(LED1_PIN) == HIGH) ? "ON" : "OFF";
+    } 
+    else if (device_id == "led2") {
+      digitalWrite(LED2_PIN, (action == "ON") ? HIGH : LOW);
+      status = (digitalRead(LED2_PIN) == HIGH) ? "ON" : "OFF";
+    } 
+    else if (device_id == "led3") {
+      digitalWrite(LED3_PIN, (action == "ON") ? HIGH : LOW);
+      status = (digitalRead(LED3_PIN) == HIGH) ? "ON" : "OFF";
     }
 
-    //phản hồi
+    //đóng Json
     StaticJsonDocument<200> responseDoc;
-    responseDoc["success"] = success;
-    responseDoc["message"] = success ? "operation_successful" : errorMessage;
-    responseDoc["led1"] = (digitalRead(LED1_PIN) == HIGH) ? "ON" : "OFF";
-    responseDoc["led2"] = (digitalRead(LED2_PIN) == HIGH) ? "ON" : "OFF";
-    responseDoc["led3"] = (digitalRead(LED3_PIN) == HIGH) ? "ON" : "OFF";
-
+    responseDoc["device_id"] = device_id;
+    responseDoc["action"] = action;
+    responseDoc["status"] = status;
     char responseBuffer[256];
     serializeJson(responseDoc, responseBuffer);
-    client.publish("device_response", responseBuffer);
-    Serial.println("Đã gửi phản hồi: " + String(responseBuffer));
+    
+    // Gửi lên topic phản hồi
+    client.publish("device_control_resp", responseBuffer);
+    Serial.println("Đã gửi phản hồi điều khiển: " + String(responseBuffer));
   }
-  else if(String(topic) == "device_status_req") {
+  else if(topicStr == "device_status_req") {
     String actualLed1Status = (digitalRead(LED1_PIN) == HIGH) ? "ON" : "OFF";
     String actualLed2Status = (digitalRead(LED2_PIN) == HIGH) ? "ON" : "OFF";
     String actualLed3Status = (digitalRead(LED3_PIN) == HIGH) ? "ON" : "OFF";
@@ -136,29 +107,36 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
     char responseBuffer[256];
     serializeJson(responseDoc, responseBuffer);
-    client.publish("device_status_res", responseBuffer);
+    client.publish("device_status_resp", responseBuffer);
     Serial.println("Đã gửi phản hồi: " + String(responseBuffer));
   }
 }
 
-//kết nối lại MQTT broker
-void reconnect() {
-  while(!client.connected()) {
-    Serial.print("Đang thử kết nối MQTT Broker...");
+//kết nối lại MQTT broker (Non-blocking)
+boolean reconnect() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("Mất kết nối WiFi, đang thử kết nối lại...");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    return false;
+  }
 
-    String clientId = "ESP32Client-...";
+  Serial.print("Đang thử kết nối MQTT Broker...");
+  String clientId = "ESP32Client-" + String(random(0xffff), HEX);
+  
+  if (client.connect(clientId.c_str())) {
+    Serial.println("Thành công!");
+    // Dùng dấu '+' để subcribe tất cả các id (vd: device_control/led1, device_control/led2...)
+    client.subscribe("device_control/+"); 
     
-    if(client.connect(clientId.c_str())) {
-      Serial.println("Thành công!");
-      client.subscribe("device_control");
-      client.subscribe("device_status_req");
-    }
-    else {
-      Serial.print("Thất bại, mã lỗi: ");
-      Serial.print(client.state());
-      Serial.println(" Thử lại trong 5 giây");
-      delay(5000);
-    }
+    // Vẫn subcribe bình thường cho yêu cầu lấy trạng thái
+    client.subscribe("device_status_req");
+    return true;
+  } else {
+    Serial.print("Thất bại, mã lỗi: ");
+    Serial.print(client.state());
+    Serial.println(" Thử lại sau 5 giây");
+    return false;
   }
 }
 
@@ -184,13 +162,21 @@ void setup() {
 
 //hàm vòng lặp chính
 void loop() {
-  // luôn giữ kết nối với broker
-  if(!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-
   unsigned long now = millis();
+
+  // Kiểm tra kết nối MQTT theo kiểu Non-blocking (mỗi 5 giây)
+  if (!client.connected()) {
+    if (now - lastReconnectAttempt > 5000) {
+      lastReconnectAttempt = now;
+      if (reconnect()) {
+        lastReconnectAttempt = 0; // Đặt lại nếu kết nối thành công
+      }
+    }
+  } else {
+    // Chỉ duy trì MQTT khi đã kết nối
+    client.loop();
+  }
+
   //gửi dữ liệu mỗi 2 giây
   if(now - lastMsg > 2000) {
     lastMsg = now;
@@ -213,26 +199,34 @@ void loop() {
       lux = 2000.0;
     }
 
+    StaticJsonDocument<200> doc;
+    char mqttBuffer[256];
+
     //kiểm tra xem đọc lỗi không
     if(isnan(temperature) || isnan(humidity)) {
       Serial.println("Lỗi: Không đọc được dữ liệu từ DHT11!");
-      return;
+      doc["status"] = "error";
+      doc["message"] = "sensor_failed";
+      serializeJson(doc, mqttBuffer);
+      Serial.print("Đang gửi cảnh báo lỗi: ");
+      Serial.println(mqttBuffer);
+      if (client.connected()) {
+        client.publish("sensor_status", mqttBuffer);
+      }
+    } else {
+      //đóng thành JSON nếu dữ liệu hợp lệ
+      doc["temperature"] = temperature;
+      doc["humidity"] = humidity;
+      doc["light"] = round(lux);
+      serializeJson(doc, mqttBuffer);
+      
+      Serial.print("Đang gửi dữ liệu: ");
+      Serial.println(mqttBuffer);
+      
+      if (client.connected()) {
+        client.publish("sensor_data", mqttBuffer);
+      }
     }
-
-    //đóng thành JSON
-    StaticJsonDocument<200> doc;
-    doc["device_id"] = "ESP_01";
-    doc["temperature"] = temperature;
-    doc["humidity"] = humidity;
-    doc["light"] = round(lux);
-
-    char mqttBuffer[256];
-    serializeJson(doc, mqttBuffer);
-
-    Serial.print("Đang gửi dữ liệu: ");
-    Serial.println(mqttBuffer);
-
-    client.publish("sensor_data", mqttBuffer);
   }
 }
 
