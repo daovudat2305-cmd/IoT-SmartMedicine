@@ -30,6 +30,6 @@ mqtt:
   topics:
     sensor-data: sensor_data
     device-control: device_control
-    device_response: device_response
+    device_response: device_control_resp
     device-status-req: device_status_req
-    device-status-res: device_status_res
+    device-status-res: device_status_resp
