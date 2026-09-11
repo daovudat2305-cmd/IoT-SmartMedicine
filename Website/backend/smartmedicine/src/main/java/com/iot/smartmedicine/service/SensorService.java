@@ -1,6 +1,8 @@
 package com.iot.smartmedicine.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import com.iot.smartmedicine.common.SensorDataType;
 import com.iot.smartmedicine.common.WarningLevel;
 import com.iot.smartmedicine.dto.response.DataSensorResponse;
 import com.iot.smartmedicine.dto.response.PageResponse;
+import com.iot.smartmedicine.dto.response.SensorChartResponse;
 import com.iot.smartmedicine.dto.response.SensorRealtimeResponse;
 import com.iot.smartmedicine.entity.DataSensor;
 import com.iot.smartmedicine.repository.DataSensorRepository;
@@ -103,5 +106,31 @@ public class SensorService {
             .totalElements(dataSensorPage.getTotalElements())
             .content(response)
             .build();
+    }
+
+    public List<SensorChartResponse> getChartData() {
+        List<DataSensor> temperatureList = dataSensorRepository.findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType.temperature);
+
+        List<DataSensor> humidityList = dataSensorRepository.findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType.humidity);
+
+        List<DataSensor> lightList = dataSensorRepository.findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType.light);
+
+        int size = Math.min(temperatureList.size(), Math.min(humidityList.size(), lightList.size()));
+        List<SensorChartResponse> chartList = new ArrayList<>();
+
+        for(int i=0; i<size; i++) {
+            chartList.add(SensorChartResponse.builder()
+                .temperature(temperatureList.get(i).getValue())
+                .humidity(humidityList.get(i).getValue())
+                .light(lightList.get(i).getValue())
+                .time(temperatureList.get(i).getTime())
+                .build()
+            );
+        }
+
+        //đảo ngược danh sách
+        Collections.reverse(chartList);
+
+        return chartList;
     }
 }

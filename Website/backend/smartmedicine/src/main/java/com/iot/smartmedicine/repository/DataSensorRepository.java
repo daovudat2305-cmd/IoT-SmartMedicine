@@ -1,5 +1,6 @@
 package com.iot.smartmedicine.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -17,6 +18,8 @@ import com.iot.smartmedicine.entity.DataSensor;
 public interface DataSensorRepository extends JpaRepository<DataSensor,String>{
     //tìm bản ghi mới nhất theo loại data
     Optional<DataSensor> findTopBySensor_DataTypeOrderByTimeDesc(SensorDataType dataType);
+
+    List<DataSensor> findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType dataType);
 
     @Query ("""
         SELECT ds FROM DataSensor ds

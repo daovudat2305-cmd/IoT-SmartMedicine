@@ -171,7 +171,7 @@ public class MqttService {
                 .build();
 
             //gửi tin qua websocket
-            messagingTemplate.convertAndSend("topic/sensor-update", realtimeData);
+            messagingTemplate.convertAndSend("/topic/sensor-update", realtimeData);
             log.info("Đã đẩy dữ liệu cảm biến tổng hợp qua WebSocket: {}", realtimeData);
 
         } catch (Exception e) {
