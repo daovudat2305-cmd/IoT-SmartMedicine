@@ -3,6 +3,8 @@ package com.iot.smartmedicine.service;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;
@@ -111,6 +113,7 @@ public class MqttService {
             JsonNode rootNode = objectMapper.readTree(payload);
 
             LocalDateTime now = LocalDateTime.now();
+            List<DataSensor> readingsToSave = new ArrayList<>();
 
             BigDecimal tempVal = null;
             WarningLevel tempWarn = WarningLevel.SAFE;
@@ -119,19 +122,38 @@ public class MqttService {
             BigDecimal lightVal = null;
             WarningLevel lightWarn = WarningLevel.SAFE;
 
+            //nhiệt độ
             if(rootNode.has("temperature") && !rootNode.get("temperature").isNull()) {
                 tempVal = BigDecimal.valueOf(rootNode.get("temperature").asDouble());
-                tempWarn = saveSensorReading(SensorDataType.temperature, tempVal, "°C");
+                DataSensor ds = buildSensorReading(SensorDataType.temperature, tempVal, "°C", now);
+                if(ds != null) {
+                    readingsToSave.add(ds);
+                    tempWarn = ds.getWarningLevel();
+                }
             }
 
+            //độ ẩm
             if(rootNode.has("humidity") && !rootNode.get("humidity").isNull()) {
                 humidityVal = BigDecimal.valueOf(rootNode.get("humidity").asDouble());
-                humidityWarn = saveSensorReading(SensorDataType.humidity, humidityVal, "%");
+                DataSensor ds = buildSensorReading(SensorDataType.humidity, humidityVal, "%", now);
+                if(ds != null) {
+                    readingsToSave.add(ds);
+                    humidityWarn = ds.getWarningLevel();
+                }
             }
 
+            //ánh sáng
             if(rootNode.has("light") && !rootNode.get("light").isNull()) {
                 lightVal = BigDecimal.valueOf(rootNode.get("light").asDouble());
-                lightWarn = saveSensorReading(SensorDataType.light, lightVal, "lux");
+                DataSensor ds = buildSensorReading(SensorDataType.light, lightVal, "lux", now);
+                if(ds != null) {
+                    readingsToSave.add(ds);
+                    lightWarn = ds.getWarningLevel();
+                }
+            }
+
+            if(!readingsToSave.isEmpty()) {
+                dataSensorRepository.saveAll(readingsToSave);
             }
 
             //gửi dữ liệu realtime
@@ -158,12 +180,12 @@ public class MqttService {
     }
 
     //đánh giá ngưỡng cảnh báo
-    private WarningLevel saveSensorReading(SensorDataType dataType, BigDecimal value, String unit) {
+    private DataSensor buildSensorReading(SensorDataType dataType, BigDecimal value, String unit, LocalDateTime timestamp) {
         Sensor sensor = sensorRepository.findByDataType(dataType).orElse(null);
 
         if(sensor == null) {
             log.warn("Chưa có cấu hình cho loại cảm biến {} trong database! Vui lòng thêm dữ liệu vào bảng sensors.", dataType);
-            return WarningLevel.SAFE;
+            return null;
         }
 
         WarningLevel warningLevel = WarningLevel.SAFE;
@@ -180,12 +202,10 @@ public class MqttService {
             .value(value)
             .unit(unit)
             .warningLevel(warningLevel)
-            .time(LocalDateTime.now())
+            .time(timestamp)
             .build();
-        
-        dataSensorRepository.save(dataSensor);
 
-        return warningLevel;
+        return dataSensor;
     }
 
     //publish topic xuống phần cứng
