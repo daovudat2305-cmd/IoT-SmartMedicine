@@ -27,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 public class SensorService {
 
     private final DataSensorRepository dataSensorRepository;
-    private final MqttService mqttService;
 
     public SensorRealtimeResponse getLatestData() {
         DataSensor temperatureRecord = dataSensorRepository.findTopBySensor_DataTypeOrderByTimeDesc(SensorDataType.temperature).orElse(null);
@@ -68,7 +67,7 @@ public class SensorService {
         return response;
     }
 
-    public PageResponse<DataSensorResponse> getDataSensors(String dataType, String sort, int page, int size) {
+    public PageResponse<DataSensorResponse> getDataSensors(String dataType, int page, int size, String sort) {
         Sort pageSort = Sort.by("time").descending();
 
         if("asc".equalsIgnoreCase(sort)) {
