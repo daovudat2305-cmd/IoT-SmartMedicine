@@ -21,6 +21,7 @@ public class Sensor {
     private String name;
 
     @Column (name = "data_type", nullable = false)
+    @Enumerated (EnumType.STRING)
     private SensorDataType dataType;
 
     @Column (name = "min_threshold", precision = 10, scale = 2)

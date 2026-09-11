@@ -23,6 +23,7 @@ public class DataSensor {
     private Sensor sensor;
 
     @Column (name = "warning_level", nullable = false)
+    @Enumerated (EnumType.STRING)
     private WarningLevel warningLevel;
 
     @Column (nullable = false, precision = 10, scale = 2)
