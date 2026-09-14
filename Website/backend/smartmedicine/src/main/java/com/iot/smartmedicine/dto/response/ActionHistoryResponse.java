@@ -13,6 +13,7 @@ public class ActionHistoryResponse {
     private Long id;
     private String deviceId;
     private String deviceName;
+    private String action;
     private ActionStatus status;
     private LocalDateTime time;
 }

@@ -12,7 +12,8 @@ public enum ErrorCode {
     BAD_CREDENTIALS(401, "Email hoặc mật khẩu không chính xác", HttpStatus.UNAUTHORIZED),
     
     USER_NOT_FOUND(404, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
-    DEVICE_NOT_FOUND(404, "Không tìm thấy thiết bị", HttpStatus.NOT_FOUND);
+    DEVICE_NOT_FOUND(404, "Không tìm thấy thiết bị", HttpStatus.NOT_FOUND),
+    INVALID_ACTION_STATUS(400, "Trạng thái hành động không hợp lệ", HttpStatus.BAD_REQUEST);
 
 
     private final int code;
