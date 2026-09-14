@@ -197,7 +197,6 @@ public class MqttService {
         }
 
         DataSensor dataSensor = DataSensor.builder()
-            .id(UUID.randomUUID().toString())
             .sensor(sensor)
             .value(value)
             .unit(unit)

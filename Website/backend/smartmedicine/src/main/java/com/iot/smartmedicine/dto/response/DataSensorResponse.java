@@ -13,7 +13,7 @@ import lombok.Data;
 @Data 
 @Builder 
 public class DataSensorResponse {
-    private String id;
+    private Long id;
     private SensorDataType dataType;
     private BigDecimal value;
     private String unit;

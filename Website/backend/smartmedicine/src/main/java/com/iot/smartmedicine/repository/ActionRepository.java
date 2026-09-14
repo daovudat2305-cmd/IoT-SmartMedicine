@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.iot.smartmedicine.entity.Action;
 
 @Repository 
-public interface ActionRepository extends JpaRepository<Action,String>{
+public interface ActionRepository extends JpaRepository<Action,Long>{
 
 }

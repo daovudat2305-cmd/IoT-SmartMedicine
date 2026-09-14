@@ -10,7 +10,7 @@ import lombok.Data;
 @Data 
 @Builder 
 public class ActionHistoryResponse {
-    private String id;
+    private Long id;
     private String deviceId;
     private String deviceName;
     private ActionStatus status;

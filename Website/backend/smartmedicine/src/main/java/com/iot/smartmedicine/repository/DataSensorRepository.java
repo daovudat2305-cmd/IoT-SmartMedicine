@@ -15,7 +15,7 @@ import com.iot.smartmedicine.common.SensorDataType;
 import com.iot.smartmedicine.entity.DataSensor;
 
 @Repository 
-public interface DataSensorRepository extends JpaRepository<DataSensor,String>{
+public interface DataSensorRepository extends JpaRepository<DataSensor,Long>{
     //tìm bản ghi mới nhất theo loại data
     Optional<DataSensor> findTopBySensor_DataTypeOrderByTimeDesc(SensorDataType dataType);
 

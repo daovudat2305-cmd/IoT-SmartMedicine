@@ -16,7 +16,8 @@ import lombok.*;
 @NoArgsConstructor 
 public class DataSensor {
     @Id 
-    private String id;
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn (name = "sensor_id", nullable = false)
