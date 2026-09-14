@@ -11,7 +11,8 @@ public enum ErrorCode {
     UNAUTHORIZED(401, "Authentication is required", HttpStatus.UNAUTHORIZED),
     BAD_CREDENTIALS(401, "Email hoặc mật khẩu không chính xác", HttpStatus.UNAUTHORIZED),
     
-    USER_NOT_FOUND(404, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND);
+    USER_NOT_FOUND(404, "Không tìm thấy người dùng", HttpStatus.NOT_FOUND),
+    DEVICE_NOT_FOUND(404, "Không tìm thấy thiết bị", HttpStatus.NOT_FOUND);
 
 
     private final int code;

@@ -5,14 +5,15 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,10 @@ public class MqttService {
     private final DataSensorRepository dataSensorRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
+
+    @Lazy 
+    @Autowired 
+    private DeviceService deviceService;
 
     @Value ("${mqtt.topics.sensor-data:sensor_data}")
     private String sensorDataTopic;
@@ -103,7 +108,16 @@ public class MqttService {
         }
         else if(topic.equals(deviceResponseTopic)) {
             log.info("Phản hồi trạng thái thiết bị từ ESP32: {}", payload);
-            //xử lý sau
+            try {
+                JsonNode node = objectMapper.readTree(payload);
+                String deviceId = node.get("device_id").asString();
+                String action = node.get("action").asString();
+                String status = node.get("status").asString();
+                boolean success = action.equals(status);
+                deviceService.confirmDeviceResponse(deviceId, success);
+            } catch (Exception e) {
+                log.error("Lỗi khi xử lý phản hồi thiết bị: {} | Payload: {}", e.getMessage(), payload);
+            }
         }
     }
 
