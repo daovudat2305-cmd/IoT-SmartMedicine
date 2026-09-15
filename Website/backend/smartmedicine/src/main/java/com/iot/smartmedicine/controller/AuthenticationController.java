@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.iot.smartmedicine.dto.request.LoginRequest;
 import com.iot.smartmedicine.dto.response.ApiResponse;
 import com.iot.smartmedicine.dto.response.LoginResponse;
-import com.iot.smartmedicine.repository.UserRepository;
 import com.iot.smartmedicine.service.AuthenticationService;
 
 import lombok.RequiredArgsConstructor;
