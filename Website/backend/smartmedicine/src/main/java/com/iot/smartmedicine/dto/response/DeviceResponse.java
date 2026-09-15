@@ -14,5 +14,5 @@ public class DeviceResponse {
     private String name;
     private DeviceStatus status;
     private LocalDateTime createdAt;
-    private LocalDateTime uploadedAt;
+    private LocalDateTime updatedAt;
 }
