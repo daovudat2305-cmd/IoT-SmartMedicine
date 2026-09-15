@@ -52,6 +52,12 @@ public class MqttService {
     @Value("${mqtt.topics.device_response:device_control_resp}")
     private String deviceResponseTopic;
 
+    @Value("${mqtt.topics.device-status-req:device_status_req}")
+    private String deviceStatusReqTopic;
+
+    @Value("${mqtt.topics.device-status-resp:device_status_resp}")
+    private String deviceStatusRespTopic;
+
     //khởi tạo callback lắng nghe service
     @PostConstruct 
     public void init() {
@@ -60,6 +66,9 @@ public class MqttService {
             public void connectComplete(boolean reconnect, String serverUrl) {
                 log.info("Kết nối MQTT hoàn tất (reconnect: {}) tới: {}", reconnect, serverUrl);
                 subscribeToTopics();
+
+                //yêu cầu gửi trạng thái thiết bị
+                requestAllDevicesStatus();
             }
 
             @Override
@@ -82,6 +91,7 @@ public class MqttService {
 
         if(mqttClient.isConnected()) {
             subscribeToTopics();
+            requestAllDevicesStatus();
         }
     }
 
@@ -93,6 +103,9 @@ public class MqttService {
 
             mqttClient.subscribe(deviceResponseTopic, 1);
             log.info("Đã subscribe topic phản hồi thiết bị: {}", deviceResponseTopic);
+
+            mqttClient.subscribe(deviceStatusRespTopic, 1);
+            log.info("Đã subscribe topic lấy trạng thái thiết bị: {}", deviceStatusRespTopic);
         } catch (MqttException e) {
             log.error("Lỗi khi subscribe topic MQTT: {}", e.getMessage());
         }
@@ -118,6 +131,10 @@ public class MqttService {
             } catch (Exception e) {
                 log.error("Lỗi khi xử lý phản hồi thiết bị: {} | Payload: {}", e.getMessage(), payload);
             }
+        }
+        else if(topic.equals(deviceStatusRespTopic)) {
+            log.info("Nhận dữ liệu trạng thái toàn bộ thiết bị từ ESP32: {}", payload);
+            deviceService.syncAllDevicesStatus(payload);
         }
     }
 
@@ -219,6 +236,12 @@ public class MqttService {
             .build();
 
         return dataSensor;
+    }
+
+    //request hỏi trạng thái
+    public void requestAllDevicesStatus() {
+        publishMessage(deviceStatusReqTopic, "{}");
+        log.info("Đã gửi yêu cầu lấy trạng thái thiết bị tới topic: {}", deviceStatusReqTopic);
     }
 
     //publish topic xuống phần cứng

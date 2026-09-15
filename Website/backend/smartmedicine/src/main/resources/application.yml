@@ -32,4 +32,4 @@ mqtt:
     device-control: device_control
     device_response: device_control_resp
     device-status-req: device_status_req
-    device-status-res: device_status_resp
+    device-status-resp: device_status_resp

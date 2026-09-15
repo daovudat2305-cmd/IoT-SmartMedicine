@@ -1,13 +1,16 @@
 package com.iot.smartmedicine.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.iot.smartmedicine.common.ActionStatus;
 import com.iot.smartmedicine.common.DeviceStatus;
@@ -23,6 +26,8 @@ import com.iot.smartmedicine.repository.DeviceRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @Service 
 @RequiredArgsConstructor 
@@ -33,10 +38,47 @@ public class DeviceService {
     private final DeviceRepository deviceRepository;
     private final MqttService mqttService;
 
+    private final SimpMessagingTemplate messagingTemplate;
+    private final ObjectMapper objectMapper;
+
     private final ConcurrentHashMap<String, CompletableFuture<Boolean>> pendingControls = new ConcurrentHashMap<>();
 
     @Value ("${mqtt.topics.device-control:device_control}")
     private String deviceControlTopic;
+
+    //lấy trạng thái thiết bị khi mới kết nối esp32
+    @Transactional 
+    public void syncAllDevicesStatus(String payload) {
+        try {
+            JsonNode node = objectMapper.readTree(payload);
+            List<DeviceResponse> updatedDevices = new ArrayList<>();
+
+            node.properties().forEach(entry -> {
+                String deviceId = entry.getKey();
+                String statusStr = entry.getValue().asString();
+
+                deviceRepository.findById(deviceId).ifPresent(device -> {
+                    device.setStatus(DeviceStatus.valueOf(statusStr.toUpperCase()));
+                    device.setUpdatedAt(LocalDateTime.now());
+                    deviceRepository.save(device);
+
+                    updatedDevices.add(DeviceResponse.builder()
+                        .id(device.getId())
+                        .name(device.getName())
+                        .status(device.getStatus())
+                        .updatedAt(device.getUpdatedAt())
+                        .build());
+                });
+            });
+
+            //gửi tin qua websocket
+            messagingTemplate.convertAndSend("/topic/device-status", updatedDevices);
+            log.info("Đã đồng bộ trạng thái thiết bị từ phần cứng vào DB và đẩy qua WebSocket");
+        } catch (Exception e) {
+            log.error("Lỗi khi đồng bộ trạng thái thiết bị: {}", e.getMessage());
+        }
+    }
+
 
     //lấy trạng thái thiết bị
     public List<DeviceResponse> getAllDevices() {
