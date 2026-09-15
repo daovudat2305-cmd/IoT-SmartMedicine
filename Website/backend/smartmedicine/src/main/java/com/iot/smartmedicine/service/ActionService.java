@@ -46,8 +46,11 @@ public class ActionService {
 
         Pageable pageable = PageRequest.of(page - 1, size, pageSort);
 
+        String cleanDeviceId = (deviceId != null && !deviceId.isBlank() && !deviceId.equalsIgnoreCase("ALL")) ? deviceId.trim() : null;
+        String cleanAction = (action != null && !action.isBlank() && !action.equalsIgnoreCase("ALL")) ? action.trim() : null;
+
         ActionStatus actionStatus = null;
-        if (status != null && !status.isBlank()) {
+        if (status != null && !status.isBlank() && !status.equalsIgnoreCase("ALL")) {
             try {
                 actionStatus = ActionStatus.valueOf(status.trim().toLowerCase());
             } catch (IllegalArgumentException e) {
@@ -60,7 +63,7 @@ public class ActionService {
         LocalDateTime endTime   = (date != null) ? date.atTime(LocalTime.MAX) : null;
 
         Page<Action> actionPage = actionRepository.findAllWithFilters(
-            deviceId, action, actionStatus, startTime, endTime, pageable
+            cleanDeviceId, cleanAction, actionStatus, startTime, endTime, pageable
         );
 
         List<ActionHistoryResponse> response = actionPage.getContent().stream()

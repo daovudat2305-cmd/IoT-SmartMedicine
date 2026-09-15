@@ -15,15 +15,26 @@ import com.iot.smartmedicine.entity.Action;
 @Repository 
 public interface ActionRepository extends JpaRepository<Action,Long>{
 
-    @Query ("""
-        SELECT act FROM Action act
-        JOIN FETCH act.device d
-        WHERE (:deviceId IS NULL OR d.id = :deviceId)
-        AND (:action IS NULL OR act.action = :action)
-        AND (:actionStatus IS NULL OR act.status = :actionStatus)
-        AND (:startTime IS NULL OR act.time >= :startTime)
-        AND (:endTime IS NULL OR act.time <= :endTime)
-    """)
+    @Query (
+        value = """
+            SELECT act FROM Action act
+            JOIN FETCH act.device d
+            WHERE (:deviceId IS NULL OR d.id = :deviceId)
+            AND (:action IS NULL OR act.action = :action)
+            AND (:actionStatus IS NULL OR act.status = :actionStatus)
+            AND (:startTime IS NULL OR act.time >= :startTime)
+            AND (:endTime IS NULL OR act.time <= :endTime)
+        """,
+        countQuery = """
+            SELECT count(act) FROM Action act
+            JOIN act.device d
+            WHERE (:deviceId IS NULL OR d.id = :deviceId)
+            AND (:action IS NULL OR act.action = :action)
+            AND (:actionStatus IS NULL OR act.status = :actionStatus)
+            AND (:startTime IS NULL OR act.time >= :startTime)
+            AND (:endTime IS NULL OR act.time <= :endTime)
+        """
+    )
     Page<Action> findAllWithFilters(
         @Param("deviceId") String deviceId,
         @Param("action") String action,
