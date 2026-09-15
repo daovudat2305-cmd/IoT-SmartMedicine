@@ -9,7 +9,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity 
-@Table (name = "data_sensor")
+@Table (name = "data_sensor", indexes = {
+    @Index (name = "idx_data_sensor_sensor_time", columnList = "sensor_id, time DESC"),
+    @Index (name = "idx_data_sensor_time", columnList = "time DESC")
+})
 @Data 
 @Builder 
 @AllArgsConstructor 

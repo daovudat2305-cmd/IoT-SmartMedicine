@@ -68,6 +68,10 @@ public class DeviceService {
 
     //điều khiển thiết bị
     public CompletableFuture<DeviceControlResponse> sendControlToDevice(String deviceId, DeviceControlRequest request) {
+        if(pendingControls.containsKey(deviceId)) {
+            throw new AppException(ErrorCode.DEVICE_BUSY);
+        }
+
         Device device = deviceRepository.findById(deviceId)
             .orElseThrow(() -> new AppException(ErrorCode.DEVICE_NOT_FOUND));
 

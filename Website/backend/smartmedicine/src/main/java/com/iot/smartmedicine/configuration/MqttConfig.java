@@ -55,9 +55,15 @@ public class MqttConfig {
             if (password != null && !password.isBlank()) {
                 options.setPassword(password.toCharArray());
             }
-            log.info("Đang kết nối tới MQTT Broker: {}", brokerUrl);
-            client.connect(options);
-            log.info("Kết nối MQTT Broker thành công với Client ID: {}", uniqueClientId);
+
+            try {
+                log.info("Đang kết nối tới MQTT Broker: {}", brokerUrl);
+                client.connect(options);
+                log.info("Kết nối MQTT Broker thành công với Client ID: {}", uniqueClientId);
+            } catch (Exception e) {
+                log.warn("Chưa thể kết nối tới MQTT Broker khi khởi động ({}). Paho sẽ tự động kết nối lại khi Broker khả dụng.", e.getMessage());
+            }
+            
             return client;
         } catch (Exception e) {
             log.error("Lỗi khi kết nối MQTT Broker tại {}: {}", brokerUrl, e.getMessage());

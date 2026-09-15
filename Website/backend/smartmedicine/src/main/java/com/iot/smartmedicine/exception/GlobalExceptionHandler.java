@@ -1,5 +1,8 @@
 package com.iot.smartmedicine.exception;
 
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -30,5 +33,14 @@ public class GlobalExceptionHandler {
 
         ApiResponse<Void> response = ApiResponse.error(errorCode.getCode(), errorCode.getMessage());
         return ResponseEntity.status(errorCode.getHttpStatus()).body(response);
+    }
+
+    @ExceptionHandler ({CompletionException.class, ExecutionException.class})
+    public ResponseEntity<ApiResponse<Void>> handleAsyncException(Exception exception) {
+        Throwable cause = exception.getCause();
+        if(cause instanceof AppException appEx) {
+            return handleAppException(appEx);
+        }
+        return handleException(exception);
     }
 }

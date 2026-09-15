@@ -15,7 +15,8 @@ public enum ErrorCode {
     DEVICE_NOT_FOUND(404, "Không tìm thấy thiết bị", HttpStatus.NOT_FOUND),
     INVALID_ACTION_STATUS(400, "Trạng thái hành động không hợp lệ", HttpStatus.BAD_REQUEST),
     
-    DEVICE_NOT_RESPONDING(504, "Thiết bị không phản hồi, vui lòng kiểm tra lại kết nối thiết bị", HttpStatus.GATEWAY_TIMEOUT);
+    DEVICE_NOT_RESPONDING(504, "Thiết bị không phản hồi, vui lòng kiểm tra lại kết nối thiết bị", HttpStatus.GATEWAY_TIMEOUT),
+    DEVICE_BUSY(409, "Thiết bị đang bận xử lý yêu cầu trước đó, vui lòng thử lại sau giây lát", HttpStatus.CONFLICT);
 
 
     private final int code;
