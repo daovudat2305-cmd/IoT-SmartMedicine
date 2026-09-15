@@ -1,6 +1,7 @@
 package com.iot.smartmedicine.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -12,6 +13,7 @@ import com.iot.smartmedicine.common.ActionStatus;
 import com.iot.smartmedicine.common.DeviceStatus;
 import com.iot.smartmedicine.dto.request.DeviceControlRequest;
 import com.iot.smartmedicine.dto.response.DeviceControlResponse;
+import com.iot.smartmedicine.dto.response.DeviceResponse;
 import com.iot.smartmedicine.entity.Action;
 import com.iot.smartmedicine.entity.Device;
 import com.iot.smartmedicine.exception.AppException;
@@ -36,6 +38,35 @@ public class DeviceService {
     @Value ("${mqtt.topics.device-control:device_control}")
     private String deviceControlTopic;
 
+    //lấy trạng thái thiết bị
+    public List<DeviceResponse> getAllDevices() {
+        List<Device> devices = deviceRepository.findAll();
+
+        return devices.stream()
+            .map(device -> DeviceResponse.builder()
+                        .id(device.getId())
+                        .name(device.getName())
+                        .status(device.getStatus())
+                        .createdAt(device.getCreatedAt())
+                        .updatedAt(device.getUpdatedAt())
+                        .build()
+            ).toList();
+    }
+
+    public DeviceResponse getDeviceById(String deviceId) {
+        Device device = deviceRepository.findById(deviceId)
+            .orElseThrow(() -> new AppException(ErrorCode.DEVICE_NOT_FOUND));
+
+        return DeviceResponse.builder()
+                .id(device.getId())
+                .name(device.getName())
+                .status(device.getStatus())
+                .createdAt(device.getCreatedAt())
+                .updatedAt(device.getUpdatedAt())
+                .build();
+    }
+
+    //điều khiển thiết bị
     public CompletableFuture<DeviceControlResponse> sendControlToDevice(String deviceId, DeviceControlRequest request) {
         Device device = deviceRepository.findById(deviceId)
             .orElseThrow(() -> new AppException(ErrorCode.DEVICE_NOT_FOUND));

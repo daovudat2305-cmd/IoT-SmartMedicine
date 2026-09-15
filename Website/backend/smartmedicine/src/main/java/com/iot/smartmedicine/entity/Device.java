@@ -21,6 +21,7 @@ public class Device {
     private String name;
 
     @Column (nullable = false)
+    @Enumerated (EnumType.STRING)
     private DeviceStatus status;
 
     @Column (name = "created_at", nullable = false)

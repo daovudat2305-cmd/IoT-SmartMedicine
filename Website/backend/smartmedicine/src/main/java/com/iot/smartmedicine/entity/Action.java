@@ -26,6 +26,7 @@ public class Action {
     private String action;
 
     @Column (nullable = false)
+    @Enumerated (EnumType.STRING)
     private ActionStatus status;
 
     @Column (nullable = false)
