@@ -7,6 +7,7 @@ import ActionHistory from "./pages/ActionHistory";
 import Profile from "./pages/Profile";
 import MainLayout from "./components/layout/MainLayout";
 import { AuthProvider } from "./context";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -19,39 +20,14 @@ function App() {
           {/* Redirect "/" về dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-          {/* Các trang có layout */}
-          <Route
-            path="/dashboard"
-            element={
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/data-sensor"
-            element={
-              <MainLayout>
-                <DataSensor />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/action-history"
-            element={
-              <MainLayout>
-                <ActionHistory />
-              </MainLayout>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <MainLayout>
-                <Profile />
-              </MainLayout>
-            }
-          />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/data-sensor" element={<DataSensor />} />
+              <Route path="/action-history" element={<ActionHistory />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+          </Route>
         </Routes>
       </BrowserRouter>
     </AuthProvider>

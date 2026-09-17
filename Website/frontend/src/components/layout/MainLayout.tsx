@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { Outlet } from "react-router";
 
 interface MainLayoutProps {
-  children: ReactNode;
+  children?: ReactNode;
 }
 
-const SIDEBAR_W = 200; // px — khớp với ảnh minh họa
+const SIDEBAR_W = 200;
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
@@ -27,7 +28,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             minHeight: "calc(100vh - 56px)", // trừ chiều cao Header
           }}
         >
-          {children}
+          {children ?? <Outlet />}
         </main>
       </div>
     </div>
