@@ -12,7 +12,11 @@ export const AUTH_STORAGE_KEYS = {
 
 // Helper mã hóa Base64 an toàn UTF-8
 const safeBase64Encode = (str: string): string => {
-  return window.btoa(unescape(encodeURIComponent(str)));
+  const bytes = new TextEncoder().encode(str);
+  const binString = Array.from(bytes, (byte) => String.fromCharCode(byte)).join(
+    "",
+  );
+  return window.btoa(binString);
 };
 
 const axiosClient: AxiosInstance = axios.create({

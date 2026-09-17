@@ -29,3 +29,10 @@ export interface DataSensorResponse {
   warningLevel: WarningLevel;
   time: string;
 }
+
+export interface GetDataSensorsParams {
+  type?: "all" | "temperature" | "humidity" | "light" | string;
+  page?: number;
+  size?: number;
+  sort?: "desc" | "asc" | string;
+}
