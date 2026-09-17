@@ -6,10 +6,11 @@ import DataSensor from "./pages/DataSensor";
 import ActionHistory from "./pages/ActionHistory";
 import Profile from "./pages/Profile";
 import MainLayout from "./components/layout/MainLayout";
+import { AuthProvider } from "./context";
 
 function App() {
   return (
-    <>
+    <AuthProvider>
       <Toaster />
       <BrowserRouter>
         <Routes>
@@ -53,7 +54,7 @@ function App() {
           />
         </Routes>
       </BrowserRouter>
-    </>
+    </AuthProvider>
   );
 }
 

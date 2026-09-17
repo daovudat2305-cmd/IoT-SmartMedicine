@@ -15,3 +15,14 @@ export interface UserInfoResponse {
   github: string;
   apiDocs: string;
 }
+
+export interface AuthState {
+  isAuthenticated: boolean;
+  username: string | null;
+  email: string | null;
+  password: string | null;
+}
+export interface AuthContextType extends AuthState {
+  login: (email: string, password: string, username: string) => void;
+  logout: () => void;
+}
