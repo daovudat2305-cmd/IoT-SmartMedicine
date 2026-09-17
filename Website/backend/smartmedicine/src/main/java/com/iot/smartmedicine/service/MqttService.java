@@ -49,7 +49,7 @@ public class MqttService {
     @Value ("${mqtt.topics.sensor-data:sensor_data}")
     private String sensorDataTopic;
 
-    @Value("${mqtt.topics.device_response:device_control_resp}")
+    @Value("${mqtt.topics.device-response:device_control_resp}")
     private String deviceResponseTopic;
 
     @Value("${mqtt.topics.device-status-req:device_status_req}")

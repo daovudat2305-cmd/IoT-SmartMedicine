@@ -7,6 +7,9 @@ const char* ssid = "Datthem :>"; //"Datthem :>"
 const char* password = "@bakhongkhonghai"; //"@bakhongkhonghai"
 const char* mqtt_server = "172.20.10.2"; //172.20.10.2, 192.168.10.97
 
+const char* mqtt_user = "daovudat"; 
+const char* mqtt_pass = "b23dccn127";
+
 //cấu hình chân cắm
 #define DHTPIN 15
 #define DHTTYPE DHT11
@@ -82,6 +85,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
       digitalWrite(LED3_PIN, (action == "ON") ? HIGH : LOW);
       status = (digitalRead(LED3_PIN) == HIGH) ? "ON" : "OFF";
     }
+    else if (device_id == "all") {
+      int pinState = (action == "ON") ? HIGH : LOW;
+      digitalWrite(LED1_PIN, pinState);
+      digitalWrite(LED2_PIN, pinState);
+      digitalWrite(LED3_PIN, pinState);
+      // Kiểm tra xem cả 3 chân đèn đã chuyển trạng thái thành công chưa
+      bool isAllUpdated = (digitalRead(LED1_PIN) == pinState) &&
+                          (digitalRead(LED2_PIN) == pinState) &&
+                          (digitalRead(LED3_PIN) == pinState);
+      status = isAllUpdated ? action : "FAILED";
+    }
 
     //đóng Json
     StaticJsonDocument<200> responseDoc;
@@ -124,7 +138,7 @@ boolean reconnect() {
   Serial.print("Đang thử kết nối MQTT Broker...");
   String clientId = "ESP32Client-" + String(random(0xffff), HEX);
   
-  if (client.connect(clientId.c_str())) {
+  if (client.connect(clientId.c_str(), mqtt_user, mqtt_pass)) {
     Serial.println("Thành công!");
     // Dùng dấu '+' để subcribe tất cả các id (vd: device_control/led1, device_control/led2...)
     client.subscribe("device_control/+"); 
@@ -155,7 +169,7 @@ void setup() {
   dht.begin();
   setup_wifi();
 
-  client.setServer(mqtt_server, 1883);
+  client.setServer(mqtt_server, 2003); //đổi port
   client.setBufferSize(512);
   client.setCallback(callback);
 }

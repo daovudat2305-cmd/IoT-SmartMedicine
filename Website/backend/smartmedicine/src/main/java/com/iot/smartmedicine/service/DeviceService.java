@@ -110,7 +110,7 @@ public class DeviceService {
 
     //điều khiển thiết bị
     public CompletableFuture<DeviceControlResponse> sendControlToDevice(String deviceId, DeviceControlRequest request) {
-        if(pendingControls.containsKey(deviceId)) {
+        if(pendingControls.containsKey(deviceId) || pendingControls.containsKey("all")) {
             throw new AppException(ErrorCode.DEVICE_BUSY);
         }
 
@@ -165,6 +165,16 @@ public class DeviceService {
             device.setUpdatedAt(LocalDateTime.now());
             deviceRepository.save(device);
 
+            // gửi WebSocket khi điều khiển 1 thiết bị
+            messagingTemplate.convertAndSend("/topic/device-status", List.of(
+                DeviceResponse.builder()
+                    .id(device.getId())
+                    .name(device.getName())
+                    .status(device.getStatus())
+                    .updatedAt(device.getUpdatedAt())
+                    .build()
+            ));
+
             //trả response
             return DeviceControlResponse.builder()
                 .actionId(action.getId())
@@ -188,5 +198,91 @@ public class DeviceService {
         }
     }
 
+    @Transactional
+    public CompletableFuture<List<DeviceControlResponse>> sendControlToAllDevices(DeviceControlRequest request) {
+        if (request == null || request.getAction() == null) {
+            throw new AppException(ErrorCode.INVALID_ACTION_STATUS);
+        }
+        String actStr = request.getAction().trim().toUpperCase();
 
+        if(!actStr.equals("ON") && !actStr.equals("OFF")) {
+            throw new AppException(ErrorCode.INVALID_ACTION_STATUS);
+        }
+
+        String controlKey = "all";
+        if(!pendingControls.isEmpty()) {
+            throw new AppException(ErrorCode.DEVICE_BUSY);
+        }
+
+        List<Device> allDevices = deviceRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+
+        //tạo bản ghi action ở trạng thái pending
+        List<Action> actions = allDevices.stream()
+            .map(dev -> Action.builder()
+                .device(dev)
+                .action(actStr)
+                .status(ActionStatus.pending)
+                .time(now)
+                .build())
+            .toList();
+        actionRepository.saveAll(actions);
+
+        CompletableFuture<Boolean> future = new CompletableFuture<Boolean>().orTimeout(5, TimeUnit.SECONDS);
+        pendingControls.put(controlKey, future);
+
+        //publish lệnh xuống MQTT
+        String topic = deviceControlTopic + "/" + controlKey;
+        String payload = String.format("{\"action\":\"%s\"}", actStr);
+        mqttService.publishMessage(topic, payload);
+        log.info("Đã gửi lệnh điều khiển tới toàn bộ thiết bị: {}", payload);
+
+        //xử lý kết quả trả về
+        return future.handle((success, exception) -> {
+            pendingControls.remove(controlKey);
+
+            if(exception != null || !Boolean.TRUE.equals(success)) {
+                log.warn("ESP32 không phản hồi hoặc thực thi lệnh điều khiển toàn bộ thất bại");
+                actions.forEach(a -> a.setStatus(ActionStatus.failed));
+                actionRepository.saveAll(actions);
+                throw new AppException(ErrorCode.DEVICE_NOT_RESPONDING);
+            }
+
+            //Thành công
+            //cập nhật trạng thái hành động
+            actions.forEach(a -> a.setStatus(ActionStatus.success));
+            actionRepository.saveAll(actions);
+
+            List<DeviceResponse> socketUpdates = new ArrayList<>();
+            List<DeviceControlResponse> responses = new ArrayList<>();
+
+            for(int i = 0; i < allDevices.size(); i++) {
+                Device device = allDevices.get(i);
+                Action act = actions.get(i);
+                device.setStatus(DeviceStatus.valueOf(actStr));
+                device.setUpdatedAt(now);
+
+                socketUpdates.add(DeviceResponse.builder()
+                    .id(device.getId())
+                    .name(device.getName())
+                    .status(device.getStatus())
+                    .updatedAt(device.getUpdatedAt())
+                    .build());
+                responses.add(DeviceControlResponse.builder()
+                    .actionId(act.getId())
+                    .deviceId(device.getId())
+                    .deviceName(device.getName())
+                    .currentDeviceStatus(device.getStatus())
+                    .commandAction(actStr)
+                    .status(ActionStatus.success)
+                    .executedAt(device.getUpdatedAt())
+                    .build());
+            }
+            deviceRepository.saveAll(allDevices);
+
+            // Đẩy cập nhật realtime tới Frontend qua WebSocket
+            messagingTemplate.convertAndSend("/topic/device-status", socketUpdates);
+            return responses;
+        });
+    }
 }

@@ -42,7 +42,6 @@ public class DeviceController {
     }
     
     
-
     @PostMapping("/{deviceId}/control")
     public CompletableFuture<ApiResponse<DeviceControlResponse>> controlDevice(
         @PathVariable("deviceId") String deviceId,
@@ -51,6 +50,12 @@ public class DeviceController {
         
         return deviceService.sendControlToDevice(deviceId, request)
             .thenApply(response -> ApiResponse.<DeviceControlResponse>success(response, "Điều khiển thiết bị thành công"));
+    }
+    
+    @PostMapping("/control-all")
+    public CompletableFuture<ApiResponse<List<DeviceControlResponse>>> controlAllDevices(@RequestBody DeviceControlRequest request) {
+        return deviceService.sendControlToAllDevices(request)
+            .thenApply(response -> ApiResponse.<List<DeviceControlResponse>>success(response, "Điều khiển toàn bộ thiết bị thành công"));
     }
     
 }
