@@ -3,12 +3,21 @@ import { useNavigate } from "react-router";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { User, LogOut, CircleUserRound } from "lucide-react";
+import { useAuth } from "@/context";
+import { toast } from "sonner";
 
 const BRAND = "#004080";
 const IN_BD = "#E2E8F0";
 
 export default function Header() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    toast.info("Đã đăng xuất khỏi hệ thống");
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header
@@ -56,7 +65,7 @@ export default function Header() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-100"
-            onClick={() => navigate("/login")}
+            onClick={handleLogout}
           >
             <LogOut size={15} />
             Đăng xuất

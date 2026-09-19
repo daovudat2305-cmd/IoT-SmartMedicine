@@ -6,13 +6,18 @@ import {
   Syringe,
   ShieldPlus,
   BriefcaseMedical,
-  User,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent } from "../components/ui/card";
 import { MedicineBottle } from "../components/MedicineBottle";
+import { useAuth } from "@/context";
+import { Navigate, useLocation, useNavigate } from "react-router";
+import { authApi } from "@/api";
+import { toast } from "sonner";
 
 const BRAND = "#0061A5";
 const BTN_CLR = "#0D99FF";
@@ -24,7 +29,76 @@ const PAGE_BG = "#F8F9FF";
 const LOGO_BG = "rgba(13,153,255,0.1)";
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // giữ nguyên cả search params khi redirect lại trang cũ
+  const fromState = (
+    location.state as { from?: { pathname: string; search: string } }
+  )?.from;
+  const redirectPath = fromState
+    ? `${fromState.pathname}${fromState.search || ""}`
+    : "/dashboard";
+
+  //reset error message
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    const cleanEmail = email.trim();
+    const cleanPassword = password.trim();
+    if (!cleanEmail || !cleanPassword) {
+      setErrorMessage("Vui lòng nhập đầy đủ email và mật khẩu");
+      return;
+    }
+    // Validate email cơ bản
+    if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
+      setErrorMessage("Định dạng email không hợp lệ");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await authApi.login({
+        email: cleanEmail,
+        password: cleanPassword,
+      });
+
+      login(cleanEmail, cleanPassword, response.data.username);
+
+      toast.success("Đăng nhập thành công");
+      navigate(redirectPath, { replace: true });
+    } catch (error: any) {
+      const msg =
+        error?.response?.data?.message ||
+        "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin";
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div
@@ -130,109 +204,120 @@ export default function Login() {
             boxShadow: "0px 4px 20px rgba(0,0,0,0.05)",
           }}
         >
-          <CardContent
-            className="flex flex-col"
-            style={{ gap: 24, padding: 32 }}
-          >
-            {/* Ten dang nhap */}
-            <div className="flex flex-col gap-2">
-              <Label
-                htmlFor="login-username"
-                style={{
-                  color: TITLE,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  letterSpacing: "0.14px",
-                }}
-              >
-                Tên đăng nhập
-              </Label>
-              <div className="relative">
-                <User
-                  size={18}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: ICON_FG }}
-                />
-                <Input
-                  id="login-username"
-                  type="text"
-                  autoComplete="username"
-                  className="pl-10 focus-visible:border-[#0D99FF] focus-visible:ring-[#0D99FF]/20"
-                  style={{
-                    height: 49,
-                    background: IN_BG,
-                    borderColor: IN_BD,
-                    borderRadius: 4,
-                  }}
-                />
-              </div>
-            </div>
+          <CardContent style={{ padding: 32 }}>
+            {/* Thẻ form bao bọc */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+              {/* Hiển thị lỗi nếu có */}
+              {errorMessage && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {errorMessage}
+                </div>
+              )}
 
-            {/* Password */}
-            <div className="flex flex-col gap-2">
-              <Label
-                htmlFor="login-password"
-                style={{
-                  color: TITLE,
-                  fontSize: 14,
-                  fontWeight: 500,
-                  letterSpacing: "0.14px",
-                }}
-              >
-                Mật khẩu
-              </Label>
-              <div className="relative">
-                <Lock
-                  size={16}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                  style={{ color: ICON_FG }}
-                />
-                <Input
-                  id="login-password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 focus-visible:border-[#0D99FF] focus-visible:ring-[#0D99FF]/20"
-                  style={{
-                    height: 49,
-                    background: IN_BG,
-                    borderColor: IN_BD,
-                    borderRadius: 4,
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent"
+              {/* Email */}
+              <div className="flex flex-col gap-2">
+                <Label
+                  htmlFor="login-email"
+                  style={{ color: TITLE, fontSize: 14, fontWeight: 500 }}
                 >
-                  {showPassword ? (
-                    <Eye size={18} style={{ color: ICON_FG }} />
-                  ) : (
-                    <EyeOff size={18} style={{ color: ICON_FG }} />
-                  )}
-                </Button>
+                  Email
+                </Label>
+                <div className="relative">
+                  <Mail
+                    size={18}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: ICON_FG }}
+                  />
+                  <Input
+                    id="login-email"
+                    type="email"
+                    value={email}
+                    disabled={isLoading}
+                    autoComplete="email"
+                    placeholder="example@gmail.com"
+                    className="pl-10 focus-visible:border-[#0D99FF] focus-visible:ring-[#0D99FF]/20"
+                    onChange={handleEmailChange}
+                    style={{
+                      height: 49,
+                      background: IN_BG,
+                      borderColor: IN_BD,
+                      borderRadius: 4,
+                    }}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Submit */}
-            <Button
-              type="submit"
-              id="login-submit"
-              className="w-full font-medium text-white transition-opacity hover:opacity-90 active:scale-[0.99]"
-              style={{
-                height: 46,
-                background: BTN_CLR,
-                borderRadius: 4,
-                boxShadow: "0px 1px 2px rgba(0,0,0,0.05)",
-                fontSize: 14,
-                letterSpacing: "0.14px",
-              }}
-            >
-              Đăng nhập
-            </Button>
+              {/* Mật khẩu */}
+              <div className="flex flex-col gap-2">
+                <Label
+                  htmlFor="login-password"
+                  style={{ color: TITLE, fontSize: 14, fontWeight: 500 }}
+                >
+                  Mật khẩu
+                </Label>
+                <div className="relative">
+                  <Lock
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+                    style={{ color: ICON_FG }}
+                  />
+                  <Input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    disabled={isLoading}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    className="pl-10 pr-10 focus-visible:border-[#0D99FF] focus-visible:ring-[#0D99FF]/20"
+                    onChange={handlePasswordChange}
+                    style={{
+                      height: 49,
+                      background: IN_BG,
+                      borderColor: IN_BD,
+                      borderRadius: 4,
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent"
+                  >
+                    {showPassword ? (
+                      <Eye size={18} style={{ color: ICON_FG }} />
+                    ) : (
+                      <EyeOff size={18} style={{ color: ICON_FG }} />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Nút Submit */}
+              <Button
+                type="submit"
+                id="login-submit"
+                disabled={isLoading}
+                className="w-full font-medium text-white transition-opacity hover:opacity-90 active:scale-[0.99]"
+                style={{
+                  height: 46,
+                  background: BTN_CLR,
+                  borderRadius: 4,
+                  boxShadow: "0px 1px 2px rgba(0,0,0,0.05)",
+                  fontSize: 14,
+                }}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 size={18} className="animate-spin" />
+                    Đang đăng nhập...
+                  </span>
+                ) : (
+                  "Đăng nhập"
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>

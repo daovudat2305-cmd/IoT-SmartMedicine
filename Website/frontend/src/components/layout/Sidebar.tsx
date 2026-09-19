@@ -7,6 +7,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { useAuth } from "@/context";
+import { toast } from "sonner";
 
 const BRAND = "#004080";
 const ICON_FG = "#2D5078";
@@ -27,10 +29,12 @@ interface SidebarProps {
 
 export default function Sidebar({ width = 200 }: SidebarProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // TODO: xử lý logout (clear token, redirect)
-    navigate("/login");
+    logout();
+    toast.info("Đã đăng xuất khỏi hệ thống");
+    navigate("/login", { replace: true });
   };
 
   return (
