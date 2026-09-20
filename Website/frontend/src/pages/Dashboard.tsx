@@ -62,6 +62,9 @@ const Dashboard: React.FC = () => {
   // 4. Quản lý trạng thái toggle của từng thiết bị (đang gọi API)
   const [togglingDeviceId, setTogglingDeviceId] = useState<string | null>(null);
 
+  // 5. Trạng thái khi đang bật/tắt toàn bộ thiết bị
+  const [isTogglingAll, setIsTogglingAll] = useState<boolean>(false);
+
   // Fetch dữ liệu biểu đồ
   useEffect(() => {
     let isMounted = true;
@@ -121,6 +124,29 @@ const Dashboard: React.FC = () => {
       );
     } finally {
       setTogglingDeviceId(null);
+    }
+  };
+
+  // Xử lý bật/tắt toàn bộ thiết bị
+  const handleToggleAll = async (action: "ON" | "OFF") => {
+    setIsTogglingAll(true);
+    try {
+      const res = await deviceApi.controlAllDevices(action);
+      if (res.success) {
+        toast.success(
+          action === "ON" ? "Đã bật toàn bộ thiết bị" : "Đã tắt toàn bộ thiết bị",
+        );
+        // Cập nhật state local ngay
+        setDevices((prev) => prev.map((d) => ({ ...d, status: action })));
+      } else {
+        toast.error(res.message || "Điều khiển toàn bộ thiết bị thất bại");
+      }
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Lỗi kết nối khi điều khiển toàn bộ thiết bị",
+      );
+    } finally {
+      setIsTogglingAll(false);
     }
   };
 
@@ -372,7 +398,25 @@ const Dashboard: React.FC = () => {
 
       {/* Điều khiển thiết bị */}
       <div>
-        <h2 className="section-title mb-3">Điều khiển thiết bị</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="section-title">Điều khiển thiết bị</h2>
+
+          {/* Nút gạt bật/tắt toàn bộ */}
+          <div className="flex items-center gap-2">
+            {isTogglingAll && (
+              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+            )}
+            <span className="text-sm text-slate-600 font-medium">
+              {devices.every((d) => d.status === "ON") ? "Tắt toàn bộ" : "Bật toàn bộ"}
+            </span>
+            <Switch
+              checked={devices.every((d) => d.status === "ON")}
+              disabled={isTogglingAll || devices.length === 0}
+              onCheckedChange={(checked) => handleToggleAll(checked ? "ON" : "OFF")}
+              className="scale-125 data-checked:bg-blue-500 data-checked:border-blue-500"
+            />
+          </div>
+        </div>
 
         {isDevicesLoading && devices.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
