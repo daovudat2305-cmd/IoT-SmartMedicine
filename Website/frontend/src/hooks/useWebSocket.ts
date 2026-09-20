@@ -2,11 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Client, type StompSubscription, type IMessage } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 
-// Polyfill tương thích SockJS trên trình duyệt với Vite
-if (typeof window !== "undefined" && !(window as any).global) {
-  (window as any).global = window;
-}
-
 const WS_URL = "http://localhost:8080/ws";
 
 type MessageCallback<T = any> = (data: T) => void;
