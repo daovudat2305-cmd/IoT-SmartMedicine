@@ -166,14 +166,14 @@ public class DeviceService {
             deviceRepository.save(device);
 
             // gửi WebSocket khi điều khiển 1 thiết bị
-            messagingTemplate.convertAndSend("/topic/device-status", List.of(
+            messagingTemplate.convertAndSend("/topic/device-status",
                 DeviceResponse.builder()
                     .id(device.getId())
                     .name(device.getName())
                     .status(device.getStatus())
                     .updatedAt(device.getUpdatedAt())
                     .build()
-            ));
+            );
 
             //trả response
             return DeviceControlResponse.builder()

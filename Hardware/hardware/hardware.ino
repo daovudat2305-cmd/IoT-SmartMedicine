@@ -234,11 +234,18 @@ void loop() {
       doc["light"] = round(lux);
       serializeJson(doc, mqttBuffer);
       
-      Serial.print("Đang gửi dữ liệu: ");
-      Serial.println(mqttBuffer);
-      
       if (client.connected()) {
-        client.publish("sensor_data", mqttBuffer);
+        boolean isPublished = client.publish("sensor_data", mqttBuffer);
+        if (isPublished) {
+          Serial.print("[MQTT GỬI THÀNH CÔNG] Dữ liệu: ");
+          Serial.println(mqttBuffer);
+        } else {
+          Serial.println("[LỖI] client.publish() thất bại (Buffer đầy hoặc rớt mạng)!");
+        }
+      } else {
+        Serial.print("[CẢNH BÁO] Chưa kết nối MQTT Broker (State: ");
+        Serial.print(client.state());
+        Serial.println("), KHÔNG THỂ gửi dữ liệu!");
       }
     }
   }
