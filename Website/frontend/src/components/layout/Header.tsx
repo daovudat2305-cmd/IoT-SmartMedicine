@@ -1,13 +1,9 @@
 import { useNavigate } from "react-router";
-
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { User, LogOut, CircleUserRound } from "lucide-react";
 import { useAuth } from "@/context";
 import { toast } from "sonner";
-
-const BRAND = "#004080";
-const IN_BD = "#E2E8F0";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -23,8 +19,8 @@ export default function Header() {
     <header
       className="sticky top-0 z-40 flex items-center justify-between border-b px-6"
       style={{
-        background: "#F7FBFF",
-        borderColor: IN_BD,
+        background: "var(--app-surface)",
+        borderColor: "var(--border-input)",
         height: 56,
       }}
     >
@@ -32,7 +28,7 @@ export default function Header() {
       <span
         className="font-semibold select-none"
         style={{
-          color: BRAND,
+          color: "var(--brand-primary)",
           fontSize: 16,
           letterSpacing: "-0.16px",
         }}
@@ -47,16 +43,20 @@ export default function Header() {
             variant="ghost"
             size="icon"
             aria-label="Tài khoản"
-            className="flex items-center justify-center p-0 rounded-full hover:bg-[#BDDEFF]/80 transition-all h-10 w-10"
+            className="flex items-center justify-center p-0 rounded-full transition-all h-10 w-10 hover:bg-[var(--nav-hover-bg)]/80"
           >
-            <CircleUserRound className="size-7" style={{ color: BRAND }} />
+            <CircleUserRound
+              className="size-7"
+              style={{ color: "var(--brand-primary)" }}
+            />
           </Button>
         </PopoverTrigger>
 
         <PopoverContent align="end" className="w-40 p-1">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-2 text-sm font-medium text-[#003070] hover:bg-[#C5DCF0] hover:text-[#002050]"
+            className="w-full justify-start gap-2 text-sm font-medium hover:bg-[var(--nav-hover-bg)]"
+            style={{ color: "var(--nav-active-text)" }}
             onClick={() => navigate("/profile")}
           >
             <User size={15} />

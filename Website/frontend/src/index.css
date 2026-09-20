@@ -36,64 +36,82 @@
   }
 
   --background: oklch(1 0 0);
-
   --foreground: oklch(0.145 0 0);
-
   --card: oklch(1 0 0);
-
   --card-foreground: oklch(0.145 0 0);
-
   --popover: oklch(1 0 0);
-
   --popover-foreground: oklch(0.145 0 0);
-
   --primary: oklch(0.205 0 0);
-
   --primary-foreground: oklch(0.985 0 0);
-
   --secondary: oklch(0.97 0 0);
-
   --secondary-foreground: oklch(0.205 0 0);
-
   --muted: oklch(0.97 0 0);
-
   --muted-foreground: oklch(0.556 0 0);
-
   --accent-foreground: oklch(0.205 0 0);
-
   --destructive: oklch(0.577 0.245 27.325);
-
   --input: oklch(0.922 0 0);
-
   --ring: oklch(0.708 0 0);
-
   --chart-1: oklch(0.87 0 0);
-
   --chart-2: oklch(0.556 0 0);
-
   --chart-3: oklch(0.439 0 0);
-
   --chart-4: oklch(0.371 0 0);
-
   --chart-5: oklch(0.269 0 0);
-
   --radius: 0.625rem;
-
   --sidebar: oklch(0.985 0 0);
-
   --sidebar-foreground: oklch(0.145 0 0);
-
   --sidebar-primary: oklch(0.205 0 0);
-
   --sidebar-primary-foreground: oklch(0.985 0 0);
-
   --sidebar-accent: oklch(0.97 0 0);
-
   --sidebar-accent-foreground: oklch(0.205 0 0);
-
   --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 
-  --sidebar-ring: oklch(0.708 0 0)
+  /* ═══════════════════════════════════════════════════════════════
+     APP DESIGN TOKENS — nguồn sự thật duy nhất cho màu sắc app
+     Thay đổi tại đây sẽ áp dụng toàn bộ giao diện
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* Brand */
+  --brand-primary:    #004080;              /* Header/Sidebar: text thương hiệu, icon chính */
+  --brand-accent:     #0D99FF;              /* Nút đăng nhập, focus ring input */
+  --brand-decorative: #0061A5;              /* Trang Login: icon trang trí (bơm tiêm, khiên) */
+  --brand-logo-bg:    rgba(13,153,255,0.1); /* Nền logo trên trang Login */
+
+  /* App Surface */
+  --app-surface:      #F7FBFF;              /* Nền Header + Sidebar */
+  --app-bg-main:      #F3F8FD;              /* Nền vùng nội dung chính (MainLayout) */
+  --app-bg-login:     #F8F9FF;              /* Nền trang Login */
+
+  /* Border */
+  --border-layout:    #D0DCEC;              /* Viền Header/Sidebar */
+  --border-input:     #E2E8F0;              /* Viền ô input */
+
+  /* Input */
+  --input-bg:         #F1F5F9;              /* Nền ô input */
+
+  /* Text */
+  --text-title:       #0B1C30;              /* Tiêu đề tối (trang Login) */
+  --text-icon-muted:  #707884;              /* Màu icon mờ bên trong input */
+
+  /* Navigation */
+  --nav-icon-fg:      #2D5078;              /* Màu icon menu mặc định */
+  --nav-active-bg:    #93C5FD;              /* Nền item menu đang active */
+  --nav-active-text:  #003270;              /* Chữ item menu đang active */
+  --nav-hover-bg:     #BDD6EE;              /* Nền item menu khi hover */
+  --nav-hover-text:   #002D6A;              /* Chữ item menu khi hover */
+
+  /* Table */
+  --table-header-bg:  #D0DCEC;              /* Nền hàng tiêu đề bảng */
+
+  /* Sensor Colors — dùng trong Dashboard chart + DataSensor icon */
+  --sensor-temp:      #ef4444;              /* Đỏ: nhiệt độ */
+  --sensor-humidity:  #3b82f6;              /* Xanh dương: độ ẩm */
+  --sensor-light:     #f59e0b;              /* Vàng: ánh sáng */
+
+  /* Profile Banner gradient */
+  --profile-banner-from: #6355EE;
+  --profile-banner-via:  #7D5DF4;
+  --profile-banner-to:   #A359F6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -237,5 +255,74 @@ code {
 
   html {
     @apply font-sans;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   REUSABLE COMPONENT CLASSES
+   Dùng @layer components để tránh specificity conflict với Tailwind.
+   Thêm class này trực tiếp vào JSX thay vì lặp lại chuỗi Tailwind dài.
+   ═══════════════════════════════════════════════════════════════════ */
+@layer components {
+  /* Layout wrapper chung cho tất cả các trang nội dung */
+  .page-container {
+    @apply px-6 py-4 max-w-5xl mx-auto space-y-6;
+  }
+
+  /* Tiêu đề h1 cấp trang */
+  .page-title {
+    @apply text-xl font-bold text-slate-900;
+  }
+
+  /* Mô tả phụ dưới tiêu đề trang */
+  .page-subtitle {
+    @apply text-sm text-slate-500;
+  }
+
+  /* Tiêu đề section (h2) trong trang */
+  .section-title {
+    @apply text-base font-bold text-slate-900;
+  }
+
+  /* Skeleton loading placeholder */
+  .skeleton-box {
+    @apply animate-pulse bg-slate-200 rounded;
+  }
+
+  /* Hàng tiêu đề bảng — màu header chuẩn */
+  .table-header-row {
+    background-color: var(--table-header-bg);
+  }
+  .table-header-row:hover {
+    background-color: var(--table-header-bg);
+  }
+
+  /* Hàng dữ liệu bảng khi hover */
+  .table-data-row {
+    @apply border-b last:border-0 cursor-default transition-colors duration-150;
+  }
+  .table-data-row:hover {
+    background-color: var(--nav-hover-bg);
+    color: var(--nav-hover-text);
+  }
+
+  /* Pagination: link trang thường */
+  .pagination-link {
+    @apply border-0 cursor-pointer;
+  }
+  .pagination-link:hover {
+    background-color: var(--nav-hover-bg);
+    color: var(--nav-hover-text);
+  }
+
+  /* Pagination: link trang đang active */
+  .pagination-link-active {
+    @apply border-0 font-semibold;
+    background-color: var(--nav-active-bg);
+    color: var(--nav-active-text);
+  }
+  .pagination-link-active:hover {
+    background-color: var(--nav-active-bg);
+    color: var(--nav-active-text);
   }
 }

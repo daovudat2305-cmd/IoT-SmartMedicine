@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Thermometer,
-  Droplets,
-  Sun,
-  AlertTriangle,
-  Wifi,
-  WifiOff,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -20,7 +12,6 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "../components/ui/chart";
 import {
   XAxis,
@@ -33,17 +24,18 @@ import {
 import { useSensorRealtime, useDeviceStatus } from "../hooks";
 import { sensorApi, deviceApi } from "../api";
 import type { SensorChartResponse } from "../types";
-
-// Cấu hình nhãn & màu sắc cho Recharts
-const chartConfig: ChartConfig = {
-  temp: { label: "Nhiệt độ (°C)", color: "#ef4444" },
-  humidity: { label: "Độ ẩm (%)", color: "#3b82f6" },
-  light: { label: "Độ sáng (Lux)", color: "#f59e0b" },
-};
+import {
+  CHART_CONFIG,
+  SENSOR_META,
+  getDeviceSensorMeta,
+  CHART_STROKE_WIDTH,
+  CHART_REF_TEMP_MAX,
+  CHART_REF_TEMP_MIN,
+} from "@/config";
 
 // Component Skeleton nhỏ gọn dùng khi đang tải
 const SkeletonBox: React.FC<{ className?: string }> = ({ className = "" }) => (
-  <div className={`animate-pulse bg-slate-200 rounded ${className}`} />
+  <div className={`skeleton-box ${className}`} />
 );
 
 const Dashboard: React.FC = () => {
@@ -132,44 +124,18 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // Helper ánh xạ icon & màu cho từng thiết bị theo ID hoặc Tên
-  const getDeviceIconAndColor = (id: string, name: string) => {
-    const lower = (id + name).toLowerCase();
-    if (
-      lower.includes("nhiệt") ||
-      lower.includes("temp") ||
-      lower.includes("led1")
-    ) {
-      return {
-        icon: (
-          <Thermometer className="h-6 w-6 text-red-500" strokeWidth={2.5} />
-        ),
-        bgColor: "bg-red-100",
-      };
-    }
-    if (
-      lower.includes("ẩm") ||
-      lower.includes("humi") ||
-      lower.includes("led2")
-    ) {
-      return {
-        icon: <Droplets className="h-6 w-6 text-blue-500" strokeWidth={2.5} />,
-        bgColor: "bg-blue-100",
-      };
-    }
-    return {
-      icon: <Sun className="h-6 w-6 text-amber-500" strokeWidth={2.5} />,
-      bgColor: "bg-amber-100",
-    };
-  };
+  // Sensor metadata cho từng loại — lấy từ SENSOR_META
+  const tempMeta = SENSOR_META.temperature;
+  const humidityMeta = SENSOR_META.humidity;
+  const lightMeta = SENSOR_META.light;
 
   return (
-    <div className="px-6 py-4 max-w-5xl mx-auto space-y-6">
+    <div className="page-container">
       {/* Header & WebSocket Connection Status */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Đơn vị giám sát</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="page-title">Đơn vị giám sát</h1>
+          <p className="page-subtitle">
             Dữ liệu môi trường và điều khiển thiết bị theo thời gian thực
           </p>
         </div>
@@ -209,11 +175,11 @@ const Dashboard: React.FC = () => {
           <CardContent className="pt-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wide">
-                <Thermometer
-                  className="h-5 w-5 text-red-500"
+                <tempMeta.Icon
+                  className={`h-5 w-5 ${tempMeta.iconClass}`}
                   strokeWidth={2.5}
                 />
-                Nhiệt độ
+                {tempMeta.label}
               </div>
               {sensorData?.tempWarning === "WARNING" && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full animate-bounce">
@@ -228,7 +194,7 @@ const Dashboard: React.FC = () => {
               <div className="text-5xl font-bold text-slate-900">
                 {sensorData?.temperature ?? "--"}
                 <span className="text-xl font-medium text-slate-500 ml-1">
-                  {sensorData?.tempUnit || "°C"}
+                  {sensorData?.tempUnit || tempMeta.unit}
                 </span>
               </div>
             )}
@@ -247,8 +213,11 @@ const Dashboard: React.FC = () => {
           <CardContent className="pt-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wide">
-                <Droplets className="h-5 w-5 text-blue-500" strokeWidth={2.5} />
-                Độ ẩm
+                <humidityMeta.Icon
+                  className={`h-5 w-5 ${humidityMeta.iconClass}`}
+                  strokeWidth={2.5}
+                />
+                {humidityMeta.label}
               </div>
               {sensorData?.humidityWarning === "WARNING" && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full animate-bounce">
@@ -263,7 +232,7 @@ const Dashboard: React.FC = () => {
               <div className="text-5xl font-bold text-slate-900">
                 {sensorData?.humidity ?? "--"}
                 <span className="text-xl font-medium text-slate-500 ml-1">
-                  {sensorData?.humidityUnit || "%"}
+                  {sensorData?.humidityUnit || humidityMeta.unit}
                 </span>
               </div>
             )}
@@ -282,8 +251,11 @@ const Dashboard: React.FC = () => {
           <CardContent className="pt-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wide">
-                <Sun className="h-5 w-5 text-amber-500" strokeWidth={2.5} />
-                Độ sáng
+                <lightMeta.Icon
+                  className={`h-5 w-5 ${lightMeta.iconClass}`}
+                  strokeWidth={2.5}
+                />
+                {lightMeta.label}
               </div>
               {sensorData?.lightWarning === "WARNING" && (
                 <span className="flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full animate-bounce">
@@ -298,7 +270,7 @@ const Dashboard: React.FC = () => {
               <div className="text-5xl font-bold text-slate-900">
                 {sensorData?.light ?? "--"}
                 <span className="text-xl font-medium text-slate-500 ml-1">
-                  {sensorData?.lightUnit || "Lux"}
+                  {sensorData?.lightUnit || lightMeta.unit}
                 </span>
               </div>
             )}
@@ -313,18 +285,15 @@ const Dashboard: React.FC = () => {
             Biểu đồ dữ liệu môi trường gần đây
           </CardTitle>
           <div className="flex items-center gap-4 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
-              Nhiệt độ (°C)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
-              Độ ẩm (%)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-500" />
-              Độ sáng (Lux)
-            </span>
+            {(["temperature", "humidity", "light"] as const).map((key) => (
+              <span key={key} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ background: CHART_CONFIG[SENSOR_META[key].chartKey]?.color }}
+                />
+                {CHART_CONFIG[SENSOR_META[key].chartKey]?.label}
+              </span>
+            ))}
           </div>
         </CardHeader>
 
@@ -337,7 +306,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <ChartContainer config={CHART_CONFIG} className="h-[300px] w-full">
               <AreaChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
@@ -349,54 +318,52 @@ const Dashboard: React.FC = () => {
                 <ChartTooltip content={<ChartTooltipContent />} />
 
                 {/* Vùng tham chiếu chuẩn */}
-                <ReferenceLine y={25} stroke="#86efac" strokeDasharray="4 4" />
-                <ReferenceLine y={20} stroke="#86efac" strokeDasharray="4 4" />
+                <ReferenceLine
+                  y={CHART_REF_TEMP_MAX}
+                  stroke="#86efac"
+                  strokeDasharray="4 4"
+                />
+                <ReferenceLine
+                  y={CHART_REF_TEMP_MIN}
+                  stroke="#86efac"
+                  strokeDasharray="4 4"
+                />
 
                 <defs>
-                  <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient
-                    id="colorHumidity"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorLight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
+                  {(["temperature", "humidity", "light"] as const).map((key) => {
+                    const meta = SENSOR_META[key];
+                    const color = CHART_CONFIG[meta.chartKey]?.color as string;
+                    return (
+                      <linearGradient
+                        key={key}
+                        id={`color_${meta.chartKey}`}
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop offset="5%" stopColor={color} stopOpacity={0.2} />
+                        <stop offset="95%" stopColor={color} stopOpacity={0} />
+                      </linearGradient>
+                    );
+                  })}
                 </defs>
 
-                <Area
-                  type="monotone"
-                  dataKey="temp"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  fill="url(#colorTemp)"
-                  dot={false}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="humidity"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fill="url(#colorHumidity)"
-                  dot={false}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="light"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  fill="url(#colorLight)"
-                  dot={false}
-                />
+                {(["temperature", "humidity", "light"] as const).map((key) => {
+                  const meta = SENSOR_META[key];
+                  const color = CHART_CONFIG[meta.chartKey]?.color as string;
+                  return (
+                    <Area
+                      key={key}
+                      type="monotone"
+                      dataKey={meta.chartKey}
+                      stroke={color}
+                      strokeWidth={CHART_STROKE_WIDTH}
+                      fill={`url(#color_${meta.chartKey})`}
+                      dot={false}
+                    />
+                  );
+                })}
               </AreaChart>
             </ChartContainer>
           )}
@@ -405,9 +372,7 @@ const Dashboard: React.FC = () => {
 
       {/* Điều khiển thiết bị */}
       <div>
-        <h2 className="text-base font-bold text-slate-900 mb-3">
-          Điều khiển thiết bị
-        </h2>
+        <h2 className="section-title mb-3">Điều khiển thiết bị</h2>
 
         {isDevicesLoading && devices.length === 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -418,10 +383,7 @@ const Dashboard: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {devices.map((device) => {
-              const { icon, bgColor } = getDeviceIconAndColor(
-                device.id,
-                device.name,
-              );
+              const meta = getDeviceSensorMeta(device.id, device.name);
               const isToggling = togglingDeviceId === device.id;
               const isChecked = device.status === "ON";
 
@@ -431,9 +393,12 @@ const Dashboard: React.FC = () => {
                   className="flex flex-row items-center gap-3 px-4 py-3 rounded-xl shadow-sm transition-all"
                 >
                   <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${bgColor}`}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${meta.bgClass}`}
                   >
-                    {icon}
+                    <meta.Icon
+                      className={`h-6 w-6 ${meta.iconClass}`}
+                      strokeWidth={2.5}
+                    />
                   </div>
 
                   <div className="flex-1 min-w-0">

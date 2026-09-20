@@ -19,15 +19,6 @@ import { Navigate, useLocation, useNavigate } from "react-router";
 import { authApi } from "@/api";
 import { toast } from "sonner";
 
-const BRAND = "#0061A5";
-const BTN_CLR = "#0D99FF";
-const TITLE = "#0B1C30";
-const ICON_FG = "#707884";
-const IN_BG = "#F1F5F9";
-const IN_BD = "#E2E8F0";
-const PAGE_BG = "#F8F9FF";
-const LOGO_BG = "rgba(13,153,255,0.1)";
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -103,12 +94,12 @@ export default function Login() {
   return (
     <div
       className="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4 py-10 sm:px-8"
-      style={{ background: PAGE_BG }}
+      style={{ background: "var(--app-bg-login)" }}
     >
       {/* Desktop decorative icons */}
       <div
         className="absolute hidden md:flex items-end"
-        style={{ left: "14%", top: "14%", color: BRAND }}
+        style={{ left: "14%", top: "14%", color: "var(--brand-decorative)" }}
       >
         <Syringe
           size={60}
@@ -135,7 +126,7 @@ export default function Login() {
       >
         <ShieldPlus
           strokeWidth={1.3}
-          style={{ color: BRAND }}
+          style={{ color: "var(--brand-decorative)" }}
           className="size-[100px] lg:size-[120px]"
         />
       </div>
@@ -143,7 +134,7 @@ export default function Login() {
       {/* Mobile decorative icons */}
       <div
         className="absolute top-3 left-3 flex items-end md:hidden"
-        style={{ color: BRAND }}
+        style={{ color: "var(--brand-decorative)" }}
       >
         <Syringe
           size={32}
@@ -160,7 +151,11 @@ export default function Login() {
         <MedicineBottle className="w-[32px] h-[42px]" />
       </div>
       <div className="absolute bottom-3 right-3 md:hidden">
-        <ShieldPlus size={44} strokeWidth={1.4} style={{ color: BRAND }} />
+        <ShieldPlus
+          size={44}
+          strokeWidth={1.4}
+          style={{ color: "var(--brand-decorative)" }}
+        />
       </div>
 
       {/* Login Card Container */}
@@ -171,12 +166,16 @@ export default function Login() {
         <div className="flex flex-col items-center gap-2">
           <div
             className="flex items-center justify-center rounded-lg"
-            style={{ width: 64, height: 58, background: LOGO_BG }}
+            style={{
+              width: 64,
+              height: 58,
+              background: "var(--brand-logo-bg)",
+            }}
           >
             <BriefcaseMedical
               size={27}
               strokeWidth={2}
-              style={{ color: BRAND }}
+              style={{ color: "var(--brand-decorative)" }}
             />
           </div>
           <h1
@@ -187,7 +186,7 @@ export default function Login() {
               fontSize: "clamp(20px, 4vw, 32px)",
               lineHeight: "40px",
               letterSpacing: "-0.8px",
-              color: TITLE,
+              color: "var(--text-title)",
               margin: 0,
             }}
           >
@@ -199,7 +198,7 @@ export default function Login() {
         <Card
           className="w-full border"
           style={{
-            borderColor: IN_BD,
+            borderColor: "var(--border-input)",
             borderRadius: 8,
             boxShadow: "0px 4px 20px rgba(0,0,0,0.05)",
           }}
@@ -218,7 +217,11 @@ export default function Login() {
               <div className="flex flex-col gap-2">
                 <Label
                   htmlFor="login-email"
-                  style={{ color: TITLE, fontSize: 14, fontWeight: 500 }}
+                  style={{
+                    color: "var(--text-title)",
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
                 >
                   Email
                 </Label>
@@ -226,7 +229,7 @@ export default function Login() {
                   <Mail
                     size={18}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: ICON_FG }}
+                    style={{ color: "var(--text-icon-muted)" }}
                   />
                   <Input
                     id="login-email"
@@ -235,12 +238,12 @@ export default function Login() {
                     disabled={isLoading}
                     autoComplete="email"
                     placeholder="example@gmail.com"
-                    className="pl-10 focus-visible:border-[#0D99FF] focus-visible:ring-[#0D99FF]/20"
+                    className="pl-10 focus-visible:border-[var(--brand-accent)] focus-visible:ring-[var(--brand-accent)]/20"
                     onChange={handleEmailChange}
                     style={{
                       height: 49,
-                      background: IN_BG,
-                      borderColor: IN_BD,
+                      background: "var(--input-bg)",
+                      borderColor: "var(--border-input)",
                       borderRadius: 4,
                     }}
                   />
@@ -251,7 +254,11 @@ export default function Login() {
               <div className="flex flex-col gap-2">
                 <Label
                   htmlFor="login-password"
-                  style={{ color: TITLE, fontSize: 14, fontWeight: 500 }}
+                  style={{
+                    color: "var(--text-title)",
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
                 >
                   Mật khẩu
                 </Label>
@@ -259,7 +266,7 @@ export default function Login() {
                   <Lock
                     size={16}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
-                    style={{ color: ICON_FG }}
+                    style={{ color: "var(--text-icon-muted)" }}
                   />
                   <Input
                     id="login-password"
@@ -268,12 +275,12 @@ export default function Login() {
                     disabled={isLoading}
                     autoComplete="current-password"
                     placeholder="••••••••"
-                    className="pl-10 pr-10 focus-visible:border-[#0D99FF] focus-visible:ring-[#0D99FF]/20"
+                    className="pl-10 pr-10 focus-visible:border-[var(--brand-accent)] focus-visible:ring-[var(--brand-accent)]/20"
                     onChange={handlePasswordChange}
                     style={{
                       height: 49,
-                      background: IN_BG,
-                      borderColor: IN_BD,
+                      background: "var(--input-bg)",
+                      borderColor: "var(--border-input)",
                       borderRadius: 4,
                     }}
                   />
@@ -286,9 +293,15 @@ export default function Login() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-transparent"
                   >
                     {showPassword ? (
-                      <Eye size={18} style={{ color: ICON_FG }} />
+                      <Eye
+                        size={18}
+                        style={{ color: "var(--text-icon-muted)" }}
+                      />
                     ) : (
-                      <EyeOff size={18} style={{ color: ICON_FG }} />
+                      <EyeOff
+                        size={18}
+                        style={{ color: "var(--text-icon-muted)" }}
+                      />
                     )}
                   </Button>
                 </div>
@@ -302,7 +315,7 @@ export default function Login() {
                 className="w-full font-medium text-white transition-opacity hover:opacity-90 active:scale-[0.99]"
                 style={{
                   height: 46,
-                  background: BTN_CLR,
+                  background: "var(--brand-accent)",
                   borderRadius: 4,
                   boxShadow: "0px 1px 2px rgba(0,0,0,0.05)",
                   fontSize: 14,

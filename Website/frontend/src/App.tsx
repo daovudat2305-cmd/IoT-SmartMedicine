@@ -12,7 +12,16 @@ import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <AuthProvider>
-      <Toaster />
+      <Toaster
+        position="top-right"
+        closeButton
+        richColors
+        toastOptions={{
+          classNames: {
+            closeButton: "!left-auto !right-0 !translate-x-[35%]",
+          },
+        }}
+      />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />

@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Thermometer,
-  Droplets,
-  Sun,
-  AlertTriangle,
-  RefreshCw,
-} from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -37,40 +31,42 @@ import { sensorApi } from "@/api";
 import type { DataSensorResponse, SensorDataType } from "@/types";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { SENSOR_META, DATA_SENSOR_PAGE_SIZE } from "@/config";
+
+// ─── Helper Components ────────────────────────────────────────────────────────
 
 function SensorTypeCell({ type }: { type: SensorDataType }) {
-  switch (type) {
-    case "temperature":
-      return (
-        <span className="flex items-center gap-1.5 justify-center">
-          <Thermometer className="h-4 w-4 text-red-500" />
-          Nhiệt độ
-        </span>
-      );
-    case "humidity":
-      return (
-        <span className="flex items-center gap-1.5 justify-center">
-          <Droplets className="h-4 w-4 text-blue-500" />
-          Độ ẩm
-        </span>
-      );
-    case "light":
-      return (
-        <span className="flex items-center gap-1.5 justify-center">
-          <Sun className="h-4 w-4 text-amber-500" />
-          Độ sáng
-        </span>
-      );
-    default:
-      return <span>{type}</span>;
-  }
+  const meta = SENSOR_META[type as keyof typeof SENSOR_META];
+  if (!meta) return <span>{type}</span>;
+  const { Icon, iconClass, label } = meta;
+  return (
+    <span className="flex items-center gap-1.5 justify-center">
+      <Icon className={`h-4 w-4 ${iconClass}`} />
+      {label}
+    </span>
+  );
 }
+
+function getPaginationRange(current: number, total: number): (number | "…")[] {
+  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+  const range: (number | "…")[] = [];
+  range.push(1);
+  if (current > 3) range.push("…");
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  for (let i = start; i <= end; i++) range.push(i);
+  if (current < total - 2) range.push("…");
+  range.push(total);
+  return range;
+}
+
+// ─── Filter Options ───────────────────────────────────────────────────────────
 
 const SENSOR_TYPE_OPTIONS = [
   { value: "all", label: "Tất cả cảm biến" },
-  { value: "temperature", label: "Nhiệt độ" },
-  { value: "humidity", label: "Độ ẩm" },
-  { value: "light", label: "Độ sáng" },
+  { value: "temperature", label: SENSOR_META.temperature.label },
+  { value: "humidity", label: SENSOR_META.humidity.label },
+  { value: "light", label: SENSOR_META.light.label },
 ];
 
 const SORT_OPTIONS = [
@@ -78,25 +74,7 @@ const SORT_OPTIONS = [
   { value: "asc", label: "Tăng dần (Cũ nhất)" },
 ];
 
-const PAGE_SIZE = 7;
-
-function getPaginationRange(current: number, total: number): (number | "…")[] {
-  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
-
-  const range: (number | "…")[] = [];
-  range.push(1);
-
-  if (current > 3) range.push("…");
-
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  for (let i = start; i <= end; i++) range.push(i);
-
-  if (current < total - 2) range.push("…");
-
-  range.push(total);
-  return range;
-}
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const DataSensor: React.FC = () => {
   const [data, setData] = useState<DataSensorResponse[]>([]);
@@ -117,7 +95,7 @@ const DataSensor: React.FC = () => {
         const response = await sensorApi.getDataSensors({
           type: filterType,
           page: currentPage,
-          size: PAGE_SIZE,
+          size: DATA_SENSOR_PAGE_SIZE,
           sort: sortOrder,
         });
 
@@ -133,14 +111,11 @@ const DataSensor: React.FC = () => {
           );
         }
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     };
 
     fetchData();
-
     return () => {
       isMounted = false;
     };
@@ -162,7 +137,7 @@ const DataSensor: React.FC = () => {
       const response = await sensorApi.getDataSensors({
         type: filterType,
         page: currentPage,
-        size: PAGE_SIZE,
+        size: DATA_SENSOR_PAGE_SIZE,
         sort: sortOrder,
       });
       if (response.success && response.data) {
@@ -190,12 +165,12 @@ const DataSensor: React.FC = () => {
   };
 
   return (
-    <div className="px-6 py-4 max-w-5xl mx-auto space-y-6">
+    <div className="page-container">
       {/* Header trang */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Lịch Sử Cảm Biến</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="page-title">Lịch Sử Cảm Biến</h1>
+          <p className="page-subtitle">
             Tra cứu và giám sát dữ liệu môi trường theo thời gian thực
           </p>
         </div>
@@ -267,7 +242,7 @@ const DataSensor: React.FC = () => {
       <Card className="rounded-xl shadow-sm overflow-hidden p-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#D0DCEC] hover:bg-[#D0DCEC]">
+            <TableRow className="table-header-row">
               <TableHead className="text-center text-sm font-semibold text-slate-600 uppercase tracking-wider w-24 py-3">
                 ID
               </TableHead>
@@ -285,22 +260,19 @@ const DataSensor: React.FC = () => {
           <TableBody>
             {isLoading ? (
               // Skeleton Loading Rows
-              Array.from({ length: PAGE_SIZE }).map((_, idx) => (
-                <TableRow
-                  key={`skeleton-${idx}`}
-                  className="border-b last:border-0"
-                >
+              Array.from({ length: DATA_SENSOR_PAGE_SIZE }).map((_, idx) => (
+                <TableRow key={`skeleton-${idx}`} className="border-b last:border-0">
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-10 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-10 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-24 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-24 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-16 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-16 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-36 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-36 mx-auto" />
                   </TableCell>
                 </TableRow>
               ))
@@ -322,10 +294,7 @@ const DataSensor: React.FC = () => {
                     : "-";
 
                 return (
-                  <TableRow
-                    key={record.id}
-                    className="border-b last:border-0 cursor-default hover:bg-[#BDD6EE] hover:text-[#002D6A] transition-colors duration-150"
-                  >
+                  <TableRow key={record.id} className="table-data-row">
                     {/* ID */}
                     <TableCell className="text-center font-bold text-[15px] text-slate-800 py-3">
                       {record.id}
@@ -391,7 +360,7 @@ const DataSensor: React.FC = () => {
                   className={
                     currentPage === 1 || isLoading
                       ? "pointer-events-none opacity-40 border-0"
-                      : "hover:bg-[#BDD6EE] hover:text-[#002D6A] border-0 cursor-pointer"
+                      : "pagination-link"
                   }
                 />
               </PaginationItem>
@@ -412,10 +381,10 @@ const DataSensor: React.FC = () => {
                       }}
                       className={
                         item === currentPage
-                          ? "bg-[#93C5FD] text-[#003270] font-semibold border-0 hover:bg-[#93C5FD] hover:text-[#003270]"
+                          ? "pagination-link-active"
                           : isLoading
                             ? "pointer-events-none opacity-50 border-0"
-                            : "hover:bg-[#BDD6EE] hover:text-[#002D6A] border-0 cursor-pointer"
+                            : "pagination-link"
                       }
                     >
                       {item}
@@ -437,7 +406,7 @@ const DataSensor: React.FC = () => {
                   className={
                     currentPage === totalPages || isLoading
                       ? "pointer-events-none opacity-40 border-0"
-                      : "hover:bg-[#BDD6EE] hover:text-[#002D6A] border-0 cursor-pointer"
+                      : "pagination-link"
                   }
                 />
               </PaginationItem>

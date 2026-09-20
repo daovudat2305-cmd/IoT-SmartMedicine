@@ -112,13 +112,18 @@ const Profile: React.FC = () => {
   ];
 
   return (
-    <div className="px-6 py-4 max-w-5xl mx-auto space-y-4">
-      <h1 className="text-lg md:text-xl font-bold text-slate-900 tracking-tight">
+    <div className="page-container space-y-4">
+      <h1 className="page-title tracking-tight">
         Thông tin cá nhân
       </h1>
 
       {/* ─── BANNER PROFILE ─── */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-[#6355EE] via-[#7D5DF4] to-[#A359F6] p-4 sm:p-5 text-white shadow-md">
+      <div
+        className="relative overflow-hidden rounded-xl p-4 sm:p-5 text-white shadow-md"
+        style={{
+          background: `linear-gradient(to right, var(--profile-banner-from), var(--profile-banner-via), var(--profile-banner-to))`,
+        }}
+      >
         {isLoading ? (
           /* Skeleton Loading cho Banner */
           <div className="flex flex-row items-center gap-4 sm:gap-5 animate-pulse">
@@ -168,7 +173,7 @@ const Profile: React.FC = () => {
 
       {/* ─── MỤC TÀI LIỆU ─── */}
       <div>
-        <h2 className="text-base sm:text-lg font-bold text-slate-800 mb-2.5 tracking-tight">
+        <h2 className="section-title mb-2.5 tracking-tight">
           Tài liệu
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

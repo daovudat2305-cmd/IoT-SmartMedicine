@@ -2,12 +2,11 @@ import type { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { Outlet } from "react-router";
+import { HEADER_HEIGHT, SIDEBAR_WIDTH } from "@/config";
 
 interface MainLayoutProps {
   children?: ReactNode;
 }
-
-const SIDEBAR_W = 200;
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
@@ -17,15 +16,15 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* ② Phần dưới: Sidebar (trái) + nội dung (phải) */}
       <div className="flex flex-1">
-        <Sidebar width={SIDEBAR_W} />
+        <Sidebar width={SIDEBAR_WIDTH} />
 
         {/* Nội dung trang — đẩy sang phải bằng marginLeft */}
         <main
           className="flex-1 overflow-auto"
           style={{
-            marginLeft: SIDEBAR_W,
-            background: "#F3F8FD",
-            minHeight: "calc(100vh - 56px)", // trừ chiều cao Header
+            marginLeft: SIDEBAR_WIDTH,
+            background: "var(--app-bg-main)",
+            minHeight: `calc(100vh - ${HEADER_HEIGHT}px)`,
           }}
         >
           {children ?? <Outlet />}

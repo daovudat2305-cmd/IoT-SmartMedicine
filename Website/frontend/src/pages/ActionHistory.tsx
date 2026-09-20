@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  CheckCircle,
-  RefreshCw,
-  XCircle,
-  RotateCcw,
-  X,
-} from "lucide-react";
+import { CheckCircle, RefreshCw, XCircle, RotateCcw, X } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -43,8 +37,10 @@ import type {
 } from "@/types";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
+import { ACTION_HISTORY_PAGE_SIZE } from "@/config";
 
-// Label Maps
+// ─── Label Maps ───────────────────────────────────────────────────────────────
+
 const ACTION_LABELS: Record<string, string> = {
   all: "Tất cả",
   ON: "ON",
@@ -63,7 +59,8 @@ const SORT_LABELS: Record<string, string> = {
   asc: "Cũ nhất",
 };
 
-// Helper: Action Badge (An toàn chống crash khi action là null/undefined)
+// ─── Helper: Action Badge ─────────────────────────────────────────────────────
+
 function ActionBadge({ action }: { action?: string }) {
   const cleanAction = action ? action.toUpperCase() : "-";
   const isON = cleanAction === "ON";
@@ -83,7 +80,8 @@ function ActionBadge({ action }: { action?: string }) {
   );
 }
 
-// Helper: Status Badge
+// ─── Helper: Status Badge ─────────────────────────────────────────────────────
+
 function StatusBadge({ status }: { status: ActionStatus | string }) {
   const config: Record<
     string,
@@ -92,8 +90,7 @@ function StatusBadge({ status }: { status: ActionStatus | string }) {
     success: {
       label: "Thành công",
       icon: <CheckCircle className="h-3.5 w-3.5" />,
-      className:
-        "border-green-300 bg-green-50 text-green-600 hover:bg-green-50",
+      className: "border-green-300 bg-green-50 text-green-600 hover:bg-green-50",
     },
     pending: {
       label: "Đang xử lý",
@@ -125,26 +122,22 @@ function StatusBadge({ status }: { status: ActionStatus | string }) {
   );
 }
 
-// Helper: Pagination Range
+// ─── Helper: Pagination Range ─────────────────────────────────────────────────
+
 function getPaginationRange(current: number, total: number): (number | "…")[] {
   if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
-
   const range: (number | "…")[] = [];
   range.push(1);
-
   if (current > 3) range.push("…");
-
   const start = Math.max(2, current - 1);
   const end = Math.min(total - 1, current + 1);
   for (let i = start; i <= end; i++) range.push(i);
-
   if (current < total - 2) range.push("…");
-
   range.push(total);
   return range;
 }
 
-const PAGE_SIZE = 5;
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const ActionHistory: React.FC = () => {
   // Data states
@@ -177,7 +170,6 @@ const ActionHistory: React.FC = () => {
         console.error("Không thể tải danh sách thiết bị:", error);
       }
     };
-
     fetchDevices();
     return () => {
       isMounted = false;
@@ -195,7 +187,7 @@ const ActionHistory: React.FC = () => {
           status: filterStatus === "all" ? undefined : filterStatus,
           date: filterDate ? filterDate : undefined,
           page: currentPage,
-          size: PAGE_SIZE,
+          size: ACTION_HISTORY_PAGE_SIZE,
           sort: sortOrder,
         };
 
@@ -217,14 +209,7 @@ const ActionHistory: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [
-      filterDevice,
-      filterAction,
-      filterStatus,
-      filterDate,
-      sortOrder,
-      currentPage,
-    ],
+    [filterDevice, filterAction, filterStatus, filterDate, sortOrder, currentPage],
   );
 
   useEffect(() => {
@@ -236,32 +221,26 @@ const ActionHistory: React.FC = () => {
     setFilterDevice(val);
     setCurrentPage(1);
   };
-
   const handleActionChange = (val: string) => {
     setFilterAction(val);
     setCurrentPage(1);
   };
-
   const handleStatusChange = (val: string) => {
     setFilterStatus(val);
     setCurrentPage(1);
   };
-
   const handleSortChange = (val: string) => {
     setSortOrder(val as "desc" | "asc");
     setCurrentPage(1);
   };
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterDate(e.target.value);
     setCurrentPage(1);
   };
-
   const handleClearDate = () => {
     setFilterDate("");
     setCurrentPage(1);
   };
-
   const handleResetFilters = () => {
     setFilterDevice("all");
     setFilterAction("all");
@@ -289,12 +268,12 @@ const ActionHistory: React.FC = () => {
     filterDate !== "";
 
   return (
-    <div className="px-6 py-4 max-w-5xl mx-auto space-y-6">
+    <div className="page-container">
       {/* Header trang */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Action History</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="page-title">Action History</h1>
+          <p className="page-subtitle">
             Tra cứu lịch sử điều khiển và trạng thái thực thi của các thiết bị
           </p>
         </div>
@@ -338,7 +317,7 @@ const ActionHistory: React.FC = () => {
                 <SelectValue>
                   {filterDevice === "all"
                     ? "Tất cả"
-                    : devices.find((d) => d.id === filterDevice)?.name ||
+                    : devices.find((d) => d.id === filterDevice)?.id ||
                       filterDevice}
                 </SelectValue>
               </SelectTrigger>
@@ -346,7 +325,7 @@ const ActionHistory: React.FC = () => {
                 <SelectItem value="all">Tất cả</SelectItem>
                 {devices.map((device) => (
                   <SelectItem key={device.id} value={device.id}>
-                    {device.name}
+                    {device.id}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -388,7 +367,7 @@ const ActionHistory: React.FC = () => {
             </Select>
           </div>
 
-          {/* Thời gian: Date picker có nút Xóa nhanh */}
+          {/* Thời gian */}
           <div className="flex flex-col gap-1.5 w-full">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-slate-600">
@@ -437,7 +416,7 @@ const ActionHistory: React.FC = () => {
       <Card className="rounded-xl shadow-sm overflow-hidden p-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-[#D0DCEC] hover:bg-[#D0DCEC]">
+            <TableRow className="table-header-row">
               <TableHead className="text-center text-sm font-semibold text-slate-600 uppercase tracking-wider w-28 py-3">
                 Log ID
               </TableHead>
@@ -459,25 +438,22 @@ const ActionHistory: React.FC = () => {
           <TableBody>
             {isLoading ? (
               // Skeleton Loading Rows
-              Array.from({ length: PAGE_SIZE }).map((_, idx) => (
-                <TableRow
-                  key={`skeleton-${idx}`}
-                  className="border-b last:border-0"
-                >
+              Array.from({ length: ACTION_HISTORY_PAGE_SIZE }).map((_, idx) => (
+                <TableRow key={`skeleton-${idx}`} className="border-b last:border-0">
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-12 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-12 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-20 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-20 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-14 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-14 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-24 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-24 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
-                    <div className="h-5 w-36 bg-slate-200 rounded mx-auto animate-pulse" />
+                    <div className="skeleton-box h-5 w-36 mx-auto" />
                   </TableCell>
                 </TableRow>
               ))
@@ -504,10 +480,7 @@ const ActionHistory: React.FC = () => {
               </TableRow>
             ) : (
               data.map((record) => (
-                <TableRow
-                  key={record.id}
-                  className="border-b last:border-0 cursor-default hover:bg-[#BDD6EE] hover:text-[#002D6A] transition-colors duration-150"
-                >
+                <TableRow key={record.id} className="table-data-row">
                   {/* Log ID */}
                   <TableCell className="text-center font-bold text-[15px] text-slate-800 py-3">
                     #{record.id}
@@ -562,7 +535,7 @@ const ActionHistory: React.FC = () => {
                     className={
                       currentPage === 1 || isLoading
                         ? "pointer-events-none opacity-40 border-0"
-                        : "hover:bg-[#BDD6EE] hover:text-[#002D6A] border-0 cursor-pointer"
+                        : "pagination-link"
                     }
                   />
                 </PaginationItem>
@@ -584,10 +557,10 @@ const ActionHistory: React.FC = () => {
                         }}
                         className={
                           item === currentPage
-                            ? "bg-[#93C5FD] text-[#003270] font-semibold border-0 hover:bg-[#93C5FD] hover:text-[#003270]"
+                            ? "pagination-link-active"
                             : isLoading
                               ? "pointer-events-none opacity-50 border-0"
-                              : "hover:bg-[#BDD6EE] hover:text-[#002D6A] border-0 cursor-pointer"
+                              : "pagination-link"
                         }
                       >
                         {item}
@@ -611,7 +584,7 @@ const ActionHistory: React.FC = () => {
                       totalPages === 0 ||
                       isLoading
                         ? "pointer-events-none opacity-40 border-0"
-                        : "hover:bg-[#BDD6EE] hover:text-[#002D6A] border-0 cursor-pointer"
+                        : "pagination-link"
                     }
                   />
                 </PaginationItem>

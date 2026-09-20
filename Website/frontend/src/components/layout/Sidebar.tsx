@@ -1,27 +1,9 @@
 import { NavLink, useNavigate } from "react-router";
-import {
-  LayoutDashboard,
-  ActivitySquare,
-  History,
-  UserCircle,
-  LogOut,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context";
 import { toast } from "sonner";
-
-const BRAND = "#004080";
-const ICON_FG = "#2D5078";
-const IN_BD = "#D0DCEC";
-const ACTIVE_BG = "#93C5FD";
-
-// Danh sách menu
-const NAV_ITEMS = [
-  { label: "Dashboard", path: "/dashboard", Icon: LayoutDashboard },
-  { label: "Data Sensors", path: "/data-sensor", Icon: ActivitySquare },
-  { label: "Action History", path: "/action-history", Icon: History },
-  { label: "Profile", path: "/profile", Icon: UserCircle },
-];
+import { NAV_ITEMS, HEADER_HEIGHT } from "@/config";
 
 interface SidebarProps {
   width?: number;
@@ -41,11 +23,11 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
     <aside
       className="fixed left-0 flex flex-col border-r"
       style={{
-        top: 56,
+        top: HEADER_HEIGHT,
         width,
-        height: "calc(100vh - 56px)",
-        background: "#F7FBFF",
-        borderColor: IN_BD,
+        height: `calc(100vh - ${HEADER_HEIGHT}px)`,
+        background: "var(--app-surface)",
+        borderColor: "var(--border-layout)",
       }}
     >
       {/* Navigation Menu */}
@@ -57,16 +39,31 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
             className={({ isActive }) =>
               [
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-150",
-                isActive
-                  ? `font-semibold`
-                  : "font-normal hover:bg-[#BDD6EE] hover:text-[#002D6A]",
+                isActive ? "font-semibold" : "font-normal",
               ].join(" ")
             }
             style={({ isActive }) => ({
               ...(isActive
-                ? { background: ACTIVE_BG, color: "#003270" }
-                : { color: ICON_FG }),
+                ? {
+                    background: "var(--nav-active-bg)",
+                    color: "var(--nav-active-text)",
+                  }
+                : { color: "var(--nav-icon-fg)" }),
             })}
+            onMouseEnter={(e) => {
+              const el = e.currentTarget;
+              if (!el.classList.contains("font-semibold")) {
+                el.style.background = "var(--nav-hover-bg)";
+                el.style.color = "var(--nav-hover-text)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              const el = e.currentTarget;
+              if (!el.classList.contains("font-semibold")) {
+                el.style.background = "";
+                el.style.color = "var(--nav-icon-fg)";
+              }
+            }}
           >
             {({ isActive }) => (
               <>
