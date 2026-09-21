@@ -100,6 +100,12 @@
   --nav-hover-bg:     #BDD6EE;              /* Nền item menu khi hover */
   --nav-hover-text:   #002D6A;              /* Chữ item menu khi hover */
 
+  /* Pagination */
+  --pagination-hover-bg:    #BFDBFE;        /* Nền nút phân trang khi hover (xanh nhạt) */
+  --pagination-hover-text:  #1D4ED8;        /* Chữ nút phân trang khi hover (xanh đậm) */
+  --pagination-active-bg:   #2563EB;        /* Nền nút trang đang chọn (xanh đậm) */
+  --pagination-active-text: #FFFFFF;        /* Chữ nút trang đang chọn (trắng) */
+
   /* Table */
   --table-header-bg:  #D0DCEC;              /* Nền hàng tiêu đề bảng */
 
@@ -305,12 +311,12 @@ code {
     @apply animate-pulse bg-slate-200 rounded;
   }
 
-  /* Hàng tiêu đề bảng — màu header chuẩn */
+  /* Hàng tiêu đề bảng — màu header chuẩn, không đổi màu khi hover */
   .table-header-row {
-    background-color: var(--table-header-bg);
+    background-color: var(--table-header-bg) !important;
   }
   .table-header-row:hover {
-    background-color: var(--table-header-bg);
+    background-color: var(--table-header-bg) !important;
   }
 
   /* Hàng dữ liệu bảng khi hover */
@@ -327,18 +333,18 @@ code {
     @apply border-0 cursor-pointer;
   }
   .pagination-link:hover {
-    background-color: var(--nav-hover-bg);
-    color: var(--nav-hover-text);
+    background-color: var(--pagination-hover-bg) !important;
+    color: var(--pagination-hover-text) !important;
   }
 
   /* Pagination: link trang đang active */
   .pagination-link-active {
     @apply border-0 font-semibold;
-    background-color: var(--nav-active-bg);
-    color: var(--nav-active-text);
+    background-color: var(--pagination-active-bg) !important;
+    color: var(--pagination-active-text) !important;
   }
   .pagination-link-active:hover {
-    background-color: var(--nav-active-bg);
-    color: var(--nav-active-text);
+    background-color: var(--pagination-active-bg) !important;
+    color: var(--pagination-active-text) !important;
   }
 }

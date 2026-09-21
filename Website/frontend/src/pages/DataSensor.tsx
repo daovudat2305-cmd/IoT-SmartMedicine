@@ -179,7 +179,7 @@ const DataSensor: React.FC = () => {
           size="sm"
           onClick={handleRefresh}
           disabled={isLoading}
-          className="gap-1.5 text-slate-600 hover:text-primary cursor-pointer"
+          className="gap-1.5 text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 cursor-pointer transition-colors"
         >
           <RefreshCw
             className={`h-4 w-4 ${isLoading ? "animate-spin text-primary" : ""}`}

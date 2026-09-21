@@ -31,6 +31,8 @@ import {
   CHART_STROKE_WIDTH,
   CHART_REF_TEMP_MAX,
   CHART_REF_TEMP_MIN,
+  CHART_Y_LEFT_DOMAIN,
+  CHART_Y_RIGHT_DOMAIN,
 } from "@/config";
 
 // Component Skeleton nhỏ gọn dùng khi đang tải
@@ -340,16 +342,50 @@ const Dashboard: React.FC = () => {
                   tick={{ fontSize: 11 }}
                   stroke="#94a3b8"
                 />
-                <YAxis hide />
+                {/* Trục Y trái: Nhiệt độ (°C) & Độ ẩm (%) */}
+                <YAxis
+                  yAxisId="left"
+                  domain={CHART_Y_LEFT_DOMAIN}
+                  tick={{ fontSize: 10 }}
+                  stroke="#94a3b8"
+                  width={52}
+                  tickFormatter={(v) => `${v}`}
+                  label={{
+                    value: "°C / %",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 12,
+                    style: { fontSize: 10, fill: "#94a3b8", fontWeight: 500 },
+                  }}
+                />
+                {/* Trục Y phải: Độ sáng (Lux) */}
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  domain={CHART_Y_RIGHT_DOMAIN}
+                  tick={{ fontSize: 10 }}
+                  stroke="#94a3b8"
+                  width={54}
+                  tickFormatter={(v) => `${v}`}
+                  label={{
+                    value: "Lux",
+                    angle: 90,
+                    position: "insideRight",
+                    offset: 12,
+                    style: { fontSize: 10, fill: "#94a3b8", fontWeight: 500 },
+                  }}
+                />
                 <ChartTooltip content={<ChartTooltipContent />} />
 
-                {/* Vùng tham chiếu chuẩn */}
+                {/* Vùng tham chiếu nhiệt độ chuẩn — gán trục trái */}
                 <ReferenceLine
+                  yAxisId="left"
                   y={CHART_REF_TEMP_MAX}
                   stroke="#86efac"
                   strokeDasharray="4 4"
                 />
                 <ReferenceLine
+                  yAxisId="left"
                   y={CHART_REF_TEMP_MIN}
                   stroke="#86efac"
                   strokeDasharray="4 4"
@@ -378,9 +414,12 @@ const Dashboard: React.FC = () => {
                 {(["temperature", "humidity", "light"] as const).map((key) => {
                   const meta = SENSOR_META[key];
                   const color = CHART_CONFIG[meta.chartKey]?.color as string;
+                  // light → trục phải (Lux); temp & humidity → trục trái (°C / %)
+                  const axisId = key === "light" ? "right" : "left";
                   return (
                     <Area
                       key={key}
+                      yAxisId={axisId}
                       type="monotone"
                       dataKey={meta.chartKey}
                       stroke={color}
