@@ -80,7 +80,7 @@
   /* App Surface */
   --app-surface:      #F7FBFF;              /* Nền Header + Sidebar */
   --app-bg-main:      #F3F8FD;              /* Nền vùng nội dung chính (MainLayout) */
-  --app-bg-login:     #F8F9FF;              /* Nền trang Login */
+  /* --app-bg-login đã xóa: Login dùng Tailwind grid + radial-gradient trực tiếp */
 
   /* Border */
   --border-layout:    #D0DCEC;              /* Viền Header/Sidebar */
@@ -264,6 +264,22 @@ code {
    Thêm class này trực tiếp vào JSX thay vì lặp lại chuỗi Tailwind dài.
    ═══════════════════════════════════════════════════════════════════ */
 @layer components {
+  /* Nền trang Login: lưới kẻ ô nhạt + radial gradient xanh nhạt từ trên xuống */
+  .login-bg {
+    background-color: #ffffff;
+    background-image:
+      linear-gradient(to right,  #f0f0f0 1px, transparent 1px),
+      linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
+    background-size: 6rem 4rem;
+  }
+  .login-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle 500px at 50% 200px, #C9EBFF, transparent);
+    pointer-events: none;
+  }
+
   /* Layout wrapper chung cho tất cả các trang nội dung */
   .page-container {
     @apply px-6 py-4 max-w-5xl mx-auto space-y-6;

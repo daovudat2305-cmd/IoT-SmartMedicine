@@ -92,10 +92,7 @@ export default function Login() {
   };
 
   return (
-    <div
-      className="relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4 py-10 sm:px-8"
-      style={{ background: "var(--app-bg-login)" }}
-    >
+    <div className="login-bg relative flex min-h-screen w-full items-center justify-center overflow-hidden px-4 py-10 sm:px-8">
       {/* Desktop decorative icons */}
       <div
         className="absolute hidden md:flex items-end"
@@ -312,7 +309,7 @@ export default function Login() {
                 type="submit"
                 id="login-submit"
                 disabled={isLoading}
-                className="w-full font-medium text-white transition-opacity hover:opacity-90 active:scale-[0.99]"
+                className="w-full font-medium text-white transition-opacity cursor-pointer hover:opacity-90 active:scale-[0.99]"
                 style={{
                   height: 46,
                   background: "var(--brand-accent)",

@@ -38,7 +38,7 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
             to={path}
             className={({ isActive }) =>
               [
-                "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-150",
+                "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-all duration-150 cursor-pointer",
                 isActive ? "font-semibold" : "font-normal",
               ].join(" ")
             }
@@ -80,7 +80,7 @@ export default function Sidebar({ width = 200 }: SidebarProps) {
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start gap-2 text-sm font-semibold text-red-700 bg-red-100 hover:text-red-800 hover:bg-red-200"
+          className="w-full justify-start gap-2 text-sm font-semibold cursor-pointer text-red-700 bg-red-100 hover:text-red-800 hover:bg-red-200"
         >
           <LogOut size={16} />
           Đăng xuất
