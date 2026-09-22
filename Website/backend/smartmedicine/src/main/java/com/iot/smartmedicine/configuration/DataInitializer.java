@@ -77,7 +77,7 @@ public class DataInitializer {
                     .name("Cảm biến độ ẩm")
                     .dataType(SensorDataType.humidity)
                     .minThreshold(new BigDecimal("40.00"))
-                    .maxThreshold(new BigDecimal("70.00"))
+                    .maxThreshold(new BigDecimal("90.00"))
                     .unit("%")
                     .build(),
                 Sensor.builder()

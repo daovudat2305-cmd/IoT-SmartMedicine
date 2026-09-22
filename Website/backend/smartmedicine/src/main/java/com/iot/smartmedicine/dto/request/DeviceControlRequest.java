@@ -1,8 +1,8 @@
 package com.iot.smartmedicine.dto.request;
 
-import lombok.Getter;
+import lombok.Data;
 
-@Getter 
+@Data
 public class DeviceControlRequest {
     private String action;
 }
