@@ -40,6 +40,26 @@ const SkeletonBox: React.FC<{ className?: string }> = ({ className = "" }) => (
   <div className={`skeleton-box ${className}`} />
 );
 
+type ChartPoint = {
+  time: string;
+  temp: number;
+  humidity: number;
+  light: number;
+};
+
+const formatChartTime = (isoString: string): string => {
+  try {
+    return new Date(isoString).toLocaleTimeString("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return isoString; // fallback nếu parse lỗi
+  }
+};
+
 const Dashboard: React.FC = () => {
   // 1. Realtime Sensor Data & WebSocket Status
   const {
@@ -95,6 +115,21 @@ const Dashboard: React.FC = () => {
     };
   }, []);
 
+  //cập nhật biểu đồ
+  useEffect(() => {
+    if (!sensorData) return;
+    const newPoint = {
+      time: formatChartTime(sensorData.time), // dùng trường time từ WebSocket response
+      temp: sensorData.temperature,
+      humidity: sensorData.humidity,
+      light: sensorData.light,
+    };
+    setChartData((prev) => {
+      const updated = [...prev, newPoint];
+      return updated.slice(-20); // giữ tối đa 20 điểm gần nhất
+    });
+  }, [sensorData]); // chạy mỗi khi sensorData thay đổi
+
   // Xử lý bật/tắt thiết bị với Pessimistic UI + Toast Feedback
   const handleToggleDevice = async (
     deviceId: string,
@@ -136,7 +171,9 @@ const Dashboard: React.FC = () => {
       const res = await deviceApi.controlAllDevices(action);
       if (res.success) {
         toast.success(
-          action === "ON" ? "Đã bật toàn bộ thiết bị" : "Đã tắt toàn bộ thiết bị",
+          action === "ON"
+            ? "Đã bật toàn bộ thiết bị"
+            : "Đã tắt toàn bộ thiết bị",
         );
         // Cập nhật state local ngay
         setDevices((prev) => prev.map((d) => ({ ...d, status: action })));
@@ -145,7 +182,8 @@ const Dashboard: React.FC = () => {
       }
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || "Lỗi kết nối khi điều khiển toàn bộ thiết bị",
+        err?.response?.data?.message ||
+          "Lỗi kết nối khi điều khiển toàn bộ thiết bị",
       );
     } finally {
       setIsTogglingAll(false);
@@ -317,7 +355,9 @@ const Dashboard: React.FC = () => {
               <span key={key} className="flex items-center gap-1.5">
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-full"
-                  style={{ background: CHART_CONFIG[SENSOR_META[key].chartKey]?.color }}
+                  style={{
+                    background: CHART_CONFIG[SENSOR_META[key].chartKey]?.color,
+                  }}
                 />
                 {CHART_CONFIG[SENSOR_META[key].chartKey]?.label}
               </span>
@@ -392,23 +432,34 @@ const Dashboard: React.FC = () => {
                 />
 
                 <defs>
-                  {(["temperature", "humidity", "light"] as const).map((key) => {
-                    const meta = SENSOR_META[key];
-                    const color = CHART_CONFIG[meta.chartKey]?.color as string;
-                    return (
-                      <linearGradient
-                        key={key}
-                        id={`color_${meta.chartKey}`}
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop offset="5%" stopColor={color} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={color} stopOpacity={0} />
-                      </linearGradient>
-                    );
-                  })}
+                  {(["temperature", "humidity", "light"] as const).map(
+                    (key) => {
+                      const meta = SENSOR_META[key];
+                      const color = CHART_CONFIG[meta.chartKey]
+                        ?.color as string;
+                      return (
+                        <linearGradient
+                          key={key}
+                          id={`color_${meta.chartKey}`}
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor={color}
+                            stopOpacity={0.2}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor={color}
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      );
+                    },
+                  )}
                 </defs>
 
                 {(["temperature", "humidity", "light"] as const).map((key) => {
@@ -446,12 +497,16 @@ const Dashboard: React.FC = () => {
               <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
             )}
             <span className="text-sm text-slate-600 font-medium">
-              {devices.every((d) => d.status === "ON") ? "Tắt toàn bộ" : "Bật toàn bộ"}
+              {devices.every((d) => d.status === "ON")
+                ? "Tắt toàn bộ"
+                : "Bật toàn bộ"}
             </span>
             <Switch
               checked={devices.every((d) => d.status === "ON")}
               disabled={isTogglingAll || devices.length === 0}
-              onCheckedChange={(checked) => handleToggleAll(checked ? "ON" : "OFF")}
+              onCheckedChange={(checked) =>
+                handleToggleAll(checked ? "ON" : "OFF")
+              }
               className="scale-125 data-checked:bg-blue-500 data-checked:border-blue-500"
             />
           </div>
