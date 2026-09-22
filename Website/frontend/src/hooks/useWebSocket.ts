@@ -82,6 +82,15 @@ function getStompClient(): Client {
   return clientInstance;
 }
 
+export function destroyStompClient(): void {
+  if (clientInstance) {
+    clientInstance.deactivate();
+    clientInstance = null;
+  }
+  activeSubscriptions.clear();
+  connectionListeners.clear();
+}
+
 // Custom Hook: useWebSocket
 export function useWebSocket<T = any>(
   topic?: string,

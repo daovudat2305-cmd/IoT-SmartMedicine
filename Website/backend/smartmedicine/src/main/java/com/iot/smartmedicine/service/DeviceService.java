@@ -58,16 +58,19 @@ public class DeviceService {
                 String statusStr = entry.getValue().asString();
 
                 deviceRepository.findById(deviceId).ifPresent(device -> {
-                    device.setStatus(DeviceStatus.valueOf(statusStr.toUpperCase()));
-                    device.setUpdatedAt(LocalDateTime.now());
-                    deviceRepository.save(device);
-
-                    updatedDevices.add(DeviceResponse.builder()
-                        .id(device.getId())
-                        .name(device.getName())
-                        .status(device.getStatus())
-                        .updatedAt(device.getUpdatedAt())
-                        .build());
+                    try {
+                        device.setStatus(DeviceStatus.valueOf(statusStr.toUpperCase()));
+                        device.setUpdatedAt(LocalDateTime.now());
+                        deviceRepository.save(device);
+                        updatedDevices.add(DeviceResponse.builder()
+                            .id(device.getId())
+                            .name(device.getName())
+                            .status(device.getStatus())
+                            .updatedAt(device.getUpdatedAt())
+                            .build());
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Trạng thái không hợp lệ '{}' từ ESP32 cho thiết bị '{}', bỏ qua.", statusStr, deviceId);
+                    }
                 });
             });
 
@@ -198,7 +201,7 @@ public class DeviceService {
         }
     }
 
-    @Transactional
+    
     public CompletableFuture<List<DeviceControlResponse>> sendControlToAllDevices(DeviceControlRequest request) {
         if (request == null || request.getAction() == null) {
             throw new AppException(ErrorCode.INVALID_ACTION_STATUS);

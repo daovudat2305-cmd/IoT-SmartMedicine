@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { CheckCircle, RefreshCw, XCircle, RotateCcw, X, Copy } from "lucide-react";
+import {
+  CheckCircle,
+  RefreshCw,
+  XCircle,
+  RotateCcw,
+  X,
+  Copy,
+} from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -39,7 +46,7 @@ import { format, parseISO, parse, isValid } from "date-fns";
 import { toast } from "sonner";
 import { ACTION_HISTORY_PAGE_SIZE } from "@/config";
 
-// Label Maps 
+// Label Maps
 
 const ACTION_LABELS: Record<string, string> = {
   all: "Tất cả",
@@ -59,7 +66,7 @@ const SORT_LABELS: Record<string, string> = {
   asc: "Cũ nhất",
 };
 
-// Helper: Action Badge 
+// Helper: Action Badge
 
 function ActionBadge({ action }: { action?: string }) {
   const cleanAction = action ? action.toUpperCase() : "-";
@@ -67,12 +74,13 @@ function ActionBadge({ action }: { action?: string }) {
   return (
     <Badge
       variant="outline"
-      className={`px-2.5 py-0.5 text-xs font-semibold ${isON
-        ? "border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-50"
-        : cleanAction === "OFF"
-          ? "border-slate-300 bg-slate-100 text-slate-500 hover:bg-slate-100"
-          : "border-slate-200 bg-slate-50 text-slate-400"
-        }`}
+      className={`px-2.5 py-0.5 text-xs font-semibold ${
+        isON
+          ? "border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-50"
+          : cleanAction === "OFF"
+            ? "border-slate-300 bg-slate-100 text-slate-500 hover:bg-slate-100"
+            : "border-slate-200 bg-slate-50 text-slate-400"
+      }`}
     >
       {cleanAction}
     </Badge>
@@ -137,7 +145,7 @@ function getPaginationRange(current: number, total: number): (number | "…")[] 
   return range;
 }
 
-// Main Component 
+// Main Component
 
 const ActionHistory: React.FC = () => {
   // Data states
@@ -175,7 +183,8 @@ const ActionHistory: React.FC = () => {
   }, []);
 
   const buildDateTimeParams = () => {
-    if (!filterDatetime) return { datetimeFrom: undefined, datetimeTo: undefined };
+    if (!filterDatetime)
+      return { datetimeFrom: undefined, datetimeTo: undefined };
     if (filterDatetime.includes("T")) {
       return { datetimeFrom: filterDatetime, datetimeTo: filterDatetime };
     }
@@ -220,17 +229,36 @@ const ActionHistory: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [filterDevice, filterAction, filterStatus, filterDatetime, sortOrder, currentPage],
+    [
+      filterDevice,
+      filterAction,
+      filterStatus,
+      filterDatetime,
+      sortOrder,
+      currentPage,
+    ],
   );
 
   useEffect(() => {
     fetchActionHistory();
   }, [fetchActionHistory]);
 
-  const handleDeviceChange = (val: string) => { setFilterDevice(val); setCurrentPage(1); };
-  const handleActionChange = (val: string) => { setFilterAction(val); setCurrentPage(1); };
-  const handleStatusChange = (val: string) => { setFilterStatus(val); setCurrentPage(1); };
-  const handleSortChange = (val: string) => { setSortOrder(val as "desc" | "asc"); setCurrentPage(1); };
+  const handleDeviceChange = (val: string) => {
+    setFilterDevice(val);
+    setCurrentPage(1);
+  };
+  const handleActionChange = (val: string) => {
+    setFilterAction(val);
+    setCurrentPage(1);
+  };
+  const handleStatusChange = (val: string) => {
+    setFilterStatus(val);
+    setCurrentPage(1);
+  };
+  const handleSortChange = (val: string) => {
+    setSortOrder(val as "desc" | "asc");
+    setCurrentPage(1);
+  };
 
   const handleDatetimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilterDatetime(e.target.value);
@@ -334,7 +362,7 @@ const ActionHistory: React.FC = () => {
                   {filterDevice === "all"
                     ? "Tất cả"
                     : devices.find((d) => d.id === filterDevice)?.id ||
-                    filterDevice}
+                      filterDevice}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -385,7 +413,9 @@ const ActionHistory: React.FC = () => {
 
           <div className="flex flex-col gap-1.5 w-full">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-600">Thời gian</label>
+              <label className="text-sm font-medium text-slate-600">
+                Thời gian
+              </label>
               {filterDatetime && (
                 <button
                   type="button"
@@ -404,7 +434,9 @@ const ActionHistory: React.FC = () => {
                 value={filterDatetime ? filterDatetime.split("T")[0] : ""}
                 onChange={(e) => {
                   const d = e.target.value;
-                  const existingTime = filterDatetime.includes("T") ? filterDatetime.split("T")[1] : "";
+                  const existingTime = filterDatetime.includes("T")
+                    ? filterDatetime.split("T")[1]
+                    : "";
                   if (!d) {
                     setFilterDatetime("");
                   } else if (existingTime) {
@@ -560,7 +592,9 @@ const ActionHistory: React.FC = () => {
                         className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-slate-400 hover:text-slate-600 transition-opacity cursor-pointer"
                         title="Copy thời gian"
                         onClick={() => {
-                          navigator.clipboard.writeText(formatDateTime(record.time));
+                          navigator.clipboard.writeText(
+                            formatDateTime(record.time),
+                          );
                         }}
                       >
                         <Copy className="h-3.5 w-3.5" />
@@ -591,8 +625,7 @@ const ActionHistory: React.FC = () => {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (currentPage > 1 && !isLoading)
-                        setCurrentPage((p) => p - 1);
+                      if (!isLoading) setCurrentPage((p) => Math.max(1, p - 1));
                     }}
                     className={
                       currentPage === 1 || isLoading
@@ -638,13 +671,13 @@ const ActionHistory: React.FC = () => {
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
-                      if (currentPage < totalPages && !isLoading)
-                        setCurrentPage((p) => p + 1);
+                      if (!isLoading)
+                        setCurrentPage((p) => Math.min(totalPages, p + 1));
                     }}
                     className={
                       currentPage === totalPages ||
-                        totalPages === 0 ||
-                        isLoading
+                      totalPages === 0 ||
+                      isLoading
                         ? "pointer-events-none opacity-40 border-0"
                         : "pagination-link"
                     }

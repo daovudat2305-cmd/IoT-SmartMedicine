@@ -6,6 +6,7 @@ import React, {
   type ReactNode,
   useCallback,
 } from "react";
+import { destroyStompClient } from "../hooks/useWebSocket";
 import { AUTH_STORAGE_KEYS } from "../api/axiosClient";
 import type { AuthContextType, AuthState } from "../types";
 
@@ -54,6 +55,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     sessionStorage.removeItem(AUTH_STORAGE_KEYS.EMAIL);
     sessionStorage.removeItem(AUTH_STORAGE_KEYS.PASSWORD);
     sessionStorage.removeItem(AUTH_STORAGE_KEYS.USERNAME);
+
+    destroyStompClient();
+
     setAuthState({
       isAuthenticated: false,
       email: null,
