@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { CheckCircle, RefreshCw, XCircle, RotateCcw, X } from "lucide-react";
+import { CheckCircle, RefreshCw, XCircle, RotateCcw, X, Copy } from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -35,11 +35,11 @@ import type {
   ActionStatus,
   GetActionHistoryParams,
 } from "@/types";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, parse, isValid } from "date-fns";
 import { toast } from "sonner";
 import { ACTION_HISTORY_PAGE_SIZE } from "@/config";
 
-// ─── Label Maps ───────────────────────────────────────────────────────────────
+// Label Maps 
 
 const ACTION_LABELS: Record<string, string> = {
   all: "Tất cả",
@@ -59,7 +59,7 @@ const SORT_LABELS: Record<string, string> = {
   asc: "Cũ nhất",
 };
 
-// ─── Helper: Action Badge ─────────────────────────────────────────────────────
+// Helper: Action Badge 
 
 function ActionBadge({ action }: { action?: string }) {
   const cleanAction = action ? action.toUpperCase() : "-";
@@ -67,20 +67,19 @@ function ActionBadge({ action }: { action?: string }) {
   return (
     <Badge
       variant="outline"
-      className={`px-2.5 py-0.5 text-xs font-semibold ${
-        isON
-          ? "border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-50"
-          : cleanAction === "OFF"
-            ? "border-slate-300 bg-slate-100 text-slate-500 hover:bg-slate-100"
-            : "border-slate-200 bg-slate-50 text-slate-400"
-      }`}
+      className={`px-2.5 py-0.5 text-xs font-semibold ${isON
+        ? "border-blue-300 bg-blue-50 text-blue-600 hover:bg-blue-50"
+        : cleanAction === "OFF"
+          ? "border-slate-300 bg-slate-100 text-slate-500 hover:bg-slate-100"
+          : "border-slate-200 bg-slate-50 text-slate-400"
+        }`}
     >
       {cleanAction}
     </Badge>
   );
 }
 
-// ─── Helper: Status Badge ─────────────────────────────────────────────────────
+// Helper: Status Badge
 
 function StatusBadge({ status }: { status: ActionStatus | string }) {
   const config: Record<
@@ -90,7 +89,8 @@ function StatusBadge({ status }: { status: ActionStatus | string }) {
     success: {
       label: "Thành công",
       icon: <CheckCircle className="h-3.5 w-3.5" />,
-      className: "border-green-300 bg-green-50 text-green-600 hover:bg-green-50",
+      className:
+        "border-green-300 bg-green-50 text-green-600 hover:bg-green-50",
     },
     pending: {
       label: "Đang xử lý",
@@ -122,7 +122,7 @@ function StatusBadge({ status }: { status: ActionStatus | string }) {
   );
 }
 
-// ─── Helper: Pagination Range ─────────────────────────────────────────────────
+//  Helper: Pagination Range
 
 function getPaginationRange(current: number, total: number): (number | "…")[] {
   if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
@@ -137,7 +137,7 @@ function getPaginationRange(current: number, total: number): (number | "…")[] 
   return range;
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Main Component 
 
 const ActionHistory: React.FC = () => {
   // Data states
@@ -145,19 +145,17 @@ const ActionHistory: React.FC = () => {
   const [devices, setDevices] = useState<DeviceResponse[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Filter states
   const [filterDevice, setFilterDevice] = useState<string>("all");
   const [filterAction, setFilterAction] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterDate, setFilterDate] = useState<string>("");
+  const [filterDatetime, setFilterDatetime] = useState<string>("");
+  const [localTimeInput, setLocalTimeInput] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalElements, setTotalElements] = useState<number>(0);
 
-  // 1. Tải danh sách thiết bị khi mount
   useEffect(() => {
     let isMounted = true;
     const fetchDevices = async () => {
@@ -176,16 +174,29 @@ const ActionHistory: React.FC = () => {
     };
   }, []);
 
-  // 2. Hàm fetch dữ liệu dùng chung (tránh lặp code)
+  const buildDateTimeParams = () => {
+    if (!filterDatetime) return { datetimeFrom: undefined, datetimeTo: undefined };
+    if (filterDatetime.includes("T")) {
+      return { datetimeFrom: filterDatetime, datetimeTo: filterDatetime };
+    }
+    return {
+      datetimeFrom: `${filterDatetime}T00:00:00`,
+      datetimeTo: `${filterDatetime}T23:59:59`,
+    };
+  };
+
   const fetchActionHistory = useCallback(
     async (isManualRefresh = false) => {
       setIsLoading(true);
       try {
+        const { datetimeFrom, datetimeTo } = buildDateTimeParams();
+
         const params: GetActionHistoryParams = {
           deviceId: filterDevice === "all" ? undefined : filterDevice,
           action: filterAction === "all" ? undefined : filterAction,
           status: filterStatus === "all" ? undefined : filterStatus,
-          date: filterDate ? filterDate : undefined,
+          datetimeFrom,
+          datetimeTo,
           page: currentPage,
           size: ACTION_HISTORY_PAGE_SIZE,
           sort: sortOrder,
@@ -209,43 +220,48 @@ const ActionHistory: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [filterDevice, filterAction, filterStatus, filterDate, sortOrder, currentPage],
+    [filterDevice, filterAction, filterStatus, filterDatetime, sortOrder, currentPage],
   );
 
   useEffect(() => {
     fetchActionHistory();
   }, [fetchActionHistory]);
 
-  // Handlers
-  const handleDeviceChange = (val: string) => {
-    setFilterDevice(val);
+  const handleDeviceChange = (val: string) => { setFilterDevice(val); setCurrentPage(1); };
+  const handleActionChange = (val: string) => { setFilterAction(val); setCurrentPage(1); };
+  const handleStatusChange = (val: string) => { setFilterStatus(val); setCurrentPage(1); };
+  const handleSortChange = (val: string) => { setSortOrder(val as "desc" | "asc"); setCurrentPage(1); };
+
+  const handleDatetimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilterDatetime(e.target.value);
     setCurrentPage(1);
   };
-  const handleActionChange = (val: string) => {
-    setFilterAction(val);
+
+  const handleClearDatetime = () => {
+    setFilterDatetime("");
+    setLocalTimeInput("");
     setCurrentPage(1);
   };
-  const handleStatusChange = (val: string) => {
-    setFilterStatus(val);
-    setCurrentPage(1);
+
+  const handleDatetimePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text").trim();
+    const parsed = parse(pasted, "HH:mm:ss dd-MM-yyyy", new Date());
+    if (isValid(parsed)) {
+      e.preventDefault();
+      const newDatetime = format(parsed, "yyyy-MM-dd'T'HH:mm:ss");
+      const newTime = format(parsed, "HH:mm:ss");
+      setFilterDatetime(newDatetime);
+      setLocalTimeInput(newTime);
+      setCurrentPage(1);
+    }
   };
-  const handleSortChange = (val: string) => {
-    setSortOrder(val as "desc" | "asc");
-    setCurrentPage(1);
-  };
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterDate(e.target.value);
-    setCurrentPage(1);
-  };
-  const handleClearDate = () => {
-    setFilterDate("");
-    setCurrentPage(1);
-  };
+
   const handleResetFilters = () => {
     setFilterDevice("all");
     setFilterAction("all");
     setFilterStatus("all");
-    setFilterDate("");
+    setFilterDatetime("");
+    setLocalTimeInput("");
     setSortOrder("desc");
     setCurrentPage(1);
   };
@@ -265,7 +281,7 @@ const ActionHistory: React.FC = () => {
     filterDevice !== "all" ||
     filterAction !== "all" ||
     filterStatus !== "all" ||
-    filterDate !== "";
+    filterDatetime !== "";
 
   return (
     <div className="page-container">
@@ -306,7 +322,7 @@ const ActionHistory: React.FC = () => {
 
       {/* ── Card: Bộ lọc ── */}
       <Card className="rounded-xl shadow-sm p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(210px,1.6fr)_minmax(0,1fr)] gap-3 items-start">
           {/* Thiết bị */}
           <div className="flex flex-col gap-1.5 w-full">
             <label className="text-sm font-medium text-slate-600">
@@ -318,7 +334,7 @@ const ActionHistory: React.FC = () => {
                   {filterDevice === "all"
                     ? "Tất cả"
                     : devices.find((d) => d.id === filterDevice)?.id ||
-                      filterDevice}
+                    filterDevice}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -367,16 +383,13 @@ const ActionHistory: React.FC = () => {
             </Select>
           </div>
 
-          {/* Thời gian */}
           <div className="flex flex-col gap-1.5 w-full">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-600">
-                Thời gian
-              </label>
-              {filterDate && (
+              <label className="text-sm font-medium text-slate-600">Thời gian</label>
+              {filterDatetime && (
                 <button
                   type="button"
-                  onClick={handleClearDate}
+                  onClick={handleClearDatetime}
                   className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 cursor-pointer"
                 >
                   <X className="h-3 w-3" />
@@ -384,12 +397,43 @@ const ActionHistory: React.FC = () => {
                 </button>
               )}
             </div>
-            <div className="relative w-full">
-              <Input
+            <div className="flex h-9 w-full rounded-md border border-input bg-background shadow-sm overflow-hidden focus-within:ring-1 focus-within:ring-ring">
+              <input
                 type="date"
-                className="w-full !h-9"
-                value={filterDate}
-                onChange={handleDateChange}
+                className="flex-1 min-w-0 border-0 bg-transparent px-2 py-1 text-sm outline-none"
+                value={filterDatetime ? filterDatetime.split("T")[0] : ""}
+                onChange={(e) => {
+                  const d = e.target.value;
+                  const existingTime = filterDatetime.includes("T") ? filterDatetime.split("T")[1] : "";
+                  if (!d) {
+                    setFilterDatetime("");
+                  } else if (existingTime) {
+                    setFilterDatetime(`${d}T${existingTime}`);
+                  } else {
+                    setFilterDatetime(d);
+                  }
+                  setCurrentPage(1);
+                }}
+              />
+              <div className="w-px bg-border shrink-0" />
+              <input
+                type="text"
+                className="w-24 shrink-0 border-0 bg-transparent px-2 py-1 text-sm outline-none"
+                placeholder="HH:mm:ss"
+                value={localTimeInput}
+                onChange={(e) => {
+                  const t = e.target.value;
+                  setLocalTimeInput(t);
+                  if (t === "" || /^\d{2}:\d{2}:\d{2}$/.test(t)) {
+                    const datepart = filterDatetime
+                      ? filterDatetime.split("T")[0]
+                      : format(new Date(), "yyyy-MM-dd");
+                    setFilterDatetime(t ? `${datepart}T${t}` : datepart || "");
+                    setCurrentPage(1);
+                  }
+                }}
+                onPaste={handleDatetimePaste}
+                title="Nhập giờ:phút:giây (VD: 07:30:42) hoặc dán thời gian từ bảng"
               />
             </div>
           </div>
@@ -439,7 +483,10 @@ const ActionHistory: React.FC = () => {
             {isLoading ? (
               // Skeleton Loading Rows
               Array.from({ length: ACTION_HISTORY_PAGE_SIZE }).map((_, idx) => (
-                <TableRow key={`skeleton-${idx}`} className="border-b last:border-0">
+                <TableRow
+                  key={`skeleton-${idx}`}
+                  className="border-b last:border-0"
+                >
                   <TableCell className="py-3 text-center">
                     <div className="skeleton-box h-5 w-12 mx-auto" />
                   </TableCell>
@@ -501,9 +548,24 @@ const ActionHistory: React.FC = () => {
                     <StatusBadge status={record.status} />
                   </TableCell>
 
-                  {/* Thời gian */}
-                  <TableCell className="text-center text-[15px] text-slate-500 py-3">
-                    {formatDateTime(record.time)}
+                  {/* Thời gian — click để copy, paste vào ô giờ để lọc */}
+                  <TableCell
+                    className="text-center text-[15px] text-slate-500 py-3 select-all cursor-text group"
+                    title="Click để chọn, copy rồi dán vào ô Giờ:Phút:Giây bên trên để lọc chính xác"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      {formatDateTime(record.time)}
+                      <button
+                        type="button"
+                        className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-slate-400 hover:text-slate-600 transition-opacity cursor-pointer"
+                        title="Copy thời gian"
+                        onClick={() => {
+                          navigator.clipboard.writeText(formatDateTime(record.time));
+                        }}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
                   </TableCell>
                 </TableRow>
               ))
@@ -581,8 +643,8 @@ const ActionHistory: React.FC = () => {
                     }}
                     className={
                       currentPage === totalPages ||
-                      totalPages === 0 ||
-                      isLoading
+                        totalPages === 0 ||
+                        isLoading
                         ? "pointer-events-none opacity-40 border-0"
                         : "pagination-link"
                     }

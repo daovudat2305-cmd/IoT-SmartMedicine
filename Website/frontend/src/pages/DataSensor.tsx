@@ -33,7 +33,7 @@ import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { SENSOR_META, DATA_SENSOR_PAGE_SIZE } from "@/config";
 
-// ─── Helper Components ────────────────────────────────────────────────────────
+// Helper Components
 
 function SensorTypeCell({ type }: { type: SensorDataType }) {
   const meta = SENSOR_META[type as keyof typeof SENSOR_META];
@@ -60,7 +60,7 @@ function getPaginationRange(current: number, total: number): (number | "…")[] 
   return range;
 }
 
-// ─── Filter Options ───────────────────────────────────────────────────────────
+// Filter Options
 
 const SENSOR_TYPE_OPTIONS = [
   { value: "all", label: "Tất cả cảm biến" },
@@ -74,7 +74,7 @@ const SORT_OPTIONS = [
   { value: "asc", label: "Tăng dần (Cũ nhất)" },
 ];
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// Main Component
 
 const DataSensor: React.FC = () => {
   const [data, setData] = useState<DataSensorResponse[]>([]);

@@ -1,8 +1,6 @@
 package com.iot.smartmedicine.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -33,7 +31,8 @@ public class ActionService {
         String deviceId,
         String action,
         String status,
-        LocalDate date,
+        LocalDateTime datetimeFrom,
+        LocalDateTime datetimeTo,
         int page,
         int size,
         String sort
@@ -59,11 +58,11 @@ public class ActionService {
         }
 
         // chuyển LocalDate → đầu ngày / cuối ngày để lọc theo khoảng thời gian
-        LocalDateTime startTime = (date != null) ? date.atStartOfDay() : null;
-        LocalDateTime endTime   = (date != null) ? date.atTime(LocalTime.MAX) : null;
+        // LocalDateTime startTime = (date != null) ? date.atStartOfDay() : null;
+        // LocalDateTime endTime   = (date != null) ? date.atTime(LocalTime.MAX) : null;
 
         Page<Action> actionPage = actionRepository.findAllWithFilters(
-            cleanDeviceId, cleanAction, actionStatus, startTime, endTime, pageable
+            cleanDeviceId, cleanAction, actionStatus, datetimeFrom, datetimeTo, pageable
         );
 
         List<ActionHistoryResponse> response = actionPage.getContent().stream()

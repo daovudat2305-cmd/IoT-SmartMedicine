@@ -36,7 +36,8 @@ export interface GetActionHistoryParams {
   deviceId?: string;
   action?: "ALL" | "ON" | "OFF" | string;
   status?: "ALL" | "success" | "pending" | "failed" | string;
-  date?: string; // Định dạng YYYY-MM-DD
+  datetimeFrom?: string;
+  datetimeTo?: string; // Định dạng YYYY-MM-DD
   page?: number;
   size?: number;
   sort?: "desc" | "asc" | string;
