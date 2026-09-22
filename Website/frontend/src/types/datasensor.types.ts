@@ -36,3 +36,9 @@ export interface GetDataSensorsParams {
   size?: number;
   sort?: "desc" | "asc" | string;
 }
+
+export interface SensorStatusResponse {
+  status: "error" | "ok" | string;
+  message: string;
+  time: string;
+}

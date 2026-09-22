@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import com.iot.smartmedicine.common.SensorDataType;
 import com.iot.smartmedicine.common.WarningLevel;
 import com.iot.smartmedicine.dto.response.SensorRealtimeResponse;
+import com.iot.smartmedicine.dto.response.SensorStatusResponse;
 import com.iot.smartmedicine.entity.DataSensor;
 import com.iot.smartmedicine.entity.Sensor;
 import com.iot.smartmedicine.repository.DataSensorRepository;
@@ -48,6 +49,9 @@ public class MqttService {
 
     @Value ("${mqtt.topics.sensor-data:sensor_data}")
     private String sensorDataTopic;
+
+    @Value ("${mqtt.topics.sensor-status:sensor_status}")
+    private String sensorStatusTopic;
 
     @Value("${mqtt.topics.device-response:device_control_resp}")
     private String deviceResponseTopic;
@@ -101,6 +105,9 @@ public class MqttService {
             mqttClient.subscribe(sensorDataTopic, 1);
             log.info("Đã subscribe topic sensor_data: {}", sensorDataTopic);
 
+            mqttClient.subscribe(sensorStatusTopic, 1);
+            log.info("Đã subscribe topic sensor_status: {}", sensorStatusTopic);
+
             mqttClient.subscribe(deviceResponseTopic, 1);
             log.info("Đã subscribe topic phản hồi thiết bị: {}", deviceResponseTopic);
 
@@ -118,6 +125,9 @@ public class MqttService {
 
         if(topic.equals(sensorDataTopic)) {
             processSensorData(payload);
+        }
+        else if(topic.equals(sensorStatusTopic)) {
+            processSensorStatus(payload);
         }
         else if(topic.equals(deviceResponseTopic)) {
             log.info("Phản hồi trạng thái thiết bị từ ESP32: {}", payload);
@@ -207,6 +217,28 @@ public class MqttService {
 
         } catch (Exception e) {
             log.error("Lỗi khi parse JSON cảm biến: {} | Payload: {}", e.getMessage(), payload);
+        }
+    }
+
+    private void processSensorStatus(String payload) {
+        try {
+            JsonNode node = objectMapper.readTree(payload);
+            String status = node.has("status") ? node.get("status").asString() : "unknown";
+            String message = node.has("message") ? node.get("message").asString() : "";
+            
+            log.warn("[CẢNH BÁO PHẦN CỨNG] Cảm biến báo trạng thái: status={}, message={}", status, message);
+            // Đóng gói DTO thông báo gửi realtime qua WebSocket
+            SensorStatusResponse statusResp = SensorStatusResponse.builder()
+                .status(status)
+                .message(message)
+                .time(LocalDateTime.now())
+                .build();
+            
+            // Đẩy qua WebSocket tới kênh "/topic/hardware-status" để Frontend hiển thị thông báo
+            messagingTemplate.convertAndSend("/topic/hardware-status", statusResp);
+            log.info("Đã gửi cảnh báo lỗi cảm biến tới WebSocket [/topic/hardware-status]: {}", statusResp);
+        } catch (Exception e) {
+            log.error("Lỗi khi xử lý tin nhắn sensor_status: {} | Payload: {}", e.getMessage(), payload);
         }
     }
 

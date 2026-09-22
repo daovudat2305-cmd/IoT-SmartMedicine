@@ -29,6 +29,7 @@ mqtt:
   keepalive: 60
   topics:
     sensor-data: sensor_data
+    sensor-status: sensor_status
     device-control: device_control
     device-response: device_control_resp
     device-status-req: device_status_req

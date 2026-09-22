@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { AlertTriangle, Wifi, WifiOff, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Wifi,
+  WifiOff,
+  Loader2,
+  AlertOctagon,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Card,
@@ -21,7 +28,11 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { useSensorRealtime, useDeviceStatus } from "../hooks";
+import {
+  useSensorRealtime,
+  useDeviceStatus,
+  useHardwareStatus,
+} from "../hooks";
 import { sensorApi, deviceApi } from "../api";
 import type { SensorChartResponse } from "../types";
 import {
@@ -68,24 +79,33 @@ const Dashboard: React.FC = () => {
     isLoading: isSensorLoading,
   } = useSensorRealtime();
 
-  // 2. Realtime Device Status
+  // 2. Realtime Hardware Status (Lỗi cảm biến)
+  const { hardwareStatus, clearStatus } = useHardwareStatus();
+
+  // 3. Realtime Device Status
   const {
     devices,
     setDevices,
     isLoading: isDevicesLoading,
   } = useDeviceStatus();
 
-  // 3. Biểu đồ lịch sử (20 điểm gần nhất)
+  // 4. Biểu đồ lịch sử (20 điểm gần nhất)
   const [chartData, setChartData] = useState<
     Array<{ time: string; temp: number; humidity: number; light: number }>
   >([]);
   const [isChartLoading, setIsChartLoading] = useState<boolean>(true);
 
-  // 4. Quản lý trạng thái toggle của từng thiết bị (đang gọi API)
+  // 5. Quản lý trạng thái toggle của từng thiết bị (đang gọi API)
   const [togglingDeviceId, setTogglingDeviceId] = useState<string | null>(null);
 
-  // 5. Trạng thái khi đang bật/tắt toàn bộ thiết bị
+  // 6. Trạng thái khi đang bật/tắt toàn bộ thiết bị
   const [isTogglingAll, setIsTogglingAll] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (sensorData && hardwareStatus?.status === "error") {
+      clearStatus(); // Cảm biến đã hoạt động lại bình thường
+    }
+  }, [sensorData]);
 
   // Fetch dữ liệu biểu đồ
   useEffect(() => {
@@ -226,6 +246,34 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Banner cảnh báo lỗi phần cứng nếu có lỗi */}
+      {hardwareStatus && hardwareStatus.status === "error" && (
+        <div className="flex items-center justify-between p-4 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 shadow-sm animate-pulse">
+          <div className="flex items-center gap-3">
+            <AlertOctagon className="h-5 w-5 text-red-600 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-sm">
+                Cảnh báo sự cố cảm biến phần cứng!
+              </p>
+              <p className="text-xs text-red-600">
+                Mã lỗi:{" "}
+                <span className="font-mono font-medium">
+                  {hardwareStatus.message}
+                </span>{" "}
+                — Kiểm tra lại kết nối dây hoặc nguồn cấp cảm biến.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={clearStatus}
+            className="p-1 hover:bg-red-100 rounded-lg text-red-500 hover:text-red-700 transition"
+            title="Đóng cảnh báo"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
