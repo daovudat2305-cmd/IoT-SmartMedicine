@@ -51,13 +51,6 @@ const SkeletonBox: React.FC<{ className?: string }> = ({ className = "" }) => (
   <div className={`skeleton-box ${className}`} />
 );
 
-type ChartPoint = {
-  time: string;
-  temp: number;
-  humidity: number;
-  light: number;
-};
-
 const formatChartTime = (isoString: string): string => {
   try {
     return new Date(isoString).toLocaleTimeString("vi-VN", {
@@ -135,7 +128,7 @@ const Dashboard: React.FC = () => {
     };
   }, []);
 
-  //cập nhật biểu đồ
+  // Cập nhật biểu đồ
   useEffect(() => {
     if (!sensorData) return;
     const newPoint = {
@@ -216,18 +209,20 @@ const Dashboard: React.FC = () => {
   const lightMeta = SENSOR_META.light;
 
   return (
-    <div className="page-container">
+    <div className="h-[calc(100vh-56px)] max-h-[calc(100vh-56px)] px-5 sm:px-6 py-3 max-w-[1400px] mx-auto flex flex-col justify-between gap-2.5 box-border overflow-hidden">
       {/* Header & WebSocket Connection Status */}
-      <div className="flex items-center justify-between">
+      <div className="flex-none flex items-center justify-between">
         <div>
-          <h1 className="page-title">Đơn vị giám sát</h1>
-          <p className="page-subtitle">
+          <h1 className="text-xl font-bold text-slate-900 leading-tight">
+            Đơn vị giám sát
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500">
             Dữ liệu môi trường và điều khiển thiết bị theo thời gian thực
           </p>
         </div>
 
         {/* Realtime Connection Indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200">
+        {/* <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 shadow-xs">
           {isConnected ? (
             <>
               <span className="relative flex h-2.5 w-2.5">
@@ -235,7 +230,6 @@ const Dashboard: React.FC = () => {
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
               </span>
               <Wifi className="h-3.5 w-3.5 text-emerald-600" />
-              <span className="text-emerald-700">Realtime Connected</span>
             </>
           ) : (
             <>
@@ -244,20 +238,17 @@ const Dashboard: React.FC = () => {
               <span className="text-slate-600">Đang kết nối lại...</span>
             </>
           )}
-        </div>
+        </div> */}
       </div>
 
       {/* Banner cảnh báo lỗi phần cứng nếu có lỗi */}
       {hardwareStatus && hardwareStatus.status === "error" && (
-        <div className="flex items-center justify-between p-4 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 shadow-sm animate-pulse">
-          <div className="flex items-center gap-3">
-            <AlertOctagon className="h-5 w-5 text-red-600 flex-shrink-0" />
+        <div className="flex-none flex items-center justify-between px-3.5 py-2 rounded-lg bg-red-50 border border-red-200 text-red-800 shadow-xs animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <AlertOctagon className="h-4 w-4 text-red-600 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-sm">
-                Cảnh báo sự cố cảm biến phần cứng!
-              </p>
-              <p className="text-xs text-red-600">
-                Mã lỗi:{" "}
+              <p className="font-semibold text-xs sm:text-sm">
+                Cảnh báo sự cố cảm biến phần cứng! Mã lỗi:{" "}
                 <span className="font-mono font-medium">
                   {hardwareStatus.message}
                 </span>{" "}
@@ -267,7 +258,7 @@ const Dashboard: React.FC = () => {
           </div>
           <button
             onClick={clearStatus}
-            className="p-1 hover:bg-red-100 rounded-lg text-red-500 hover:text-red-700 transition"
+            className="p-1 hover:bg-red-100 rounded text-red-500 hover:text-red-700 transition"
             title="Đóng cảnh báo"
           >
             <X className="h-4 w-4" />
@@ -276,21 +267,21 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* 3 Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="flex-none grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Card Nhiệt độ */}
         <Card
           size="sm"
-          className={`border-t-4 rounded-xl shadow-sm transition-all duration-300 ${
+          className={`border-t-[3.5px] rounded-xl shadow-xs py-2.5 px-4 transition-all duration-300 gap-1 ${
             sensorData?.tempWarning === "WARNING"
-              ? "border-t-red-600 bg-red-50/30 ring-2 ring-red-400"
+              ? "border-t-red-600 bg-red-50/30 ring-1 ring-red-400"
               : "border-t-red-500"
           }`}
         >
-          <CardContent className="pt-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wide">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 <tempMeta.Icon
-                  className={`h-5 w-5 ${tempMeta.iconClass}`}
+                  className={`h-4.5 w-4.5 ${tempMeta.iconClass}`}
                   strokeWidth={2.5}
                 />
                 {tempMeta.label}
@@ -303,11 +294,11 @@ const Dashboard: React.FC = () => {
             </div>
 
             {isSensorLoading && !sensorData ? (
-              <SkeletonBox className="h-12 w-32 my-1" />
+              <SkeletonBox className="h-9 w-28 my-1" />
             ) : (
-              <div className="text-5xl font-bold text-slate-900">
+              <div className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
                 {sensorData?.temperature ?? "--"}
-                <span className="text-xl font-medium text-slate-500 ml-1">
+                <span className="text-base font-medium text-slate-500 ml-1">
                   {sensorData?.tempUnit || tempMeta.unit}
                 </span>
               </div>
@@ -318,17 +309,17 @@ const Dashboard: React.FC = () => {
         {/* Card Độ ẩm */}
         <Card
           size="sm"
-          className={`border-t-4 rounded-xl shadow-sm transition-all duration-300 ${
+          className={`border-t-[3.5px] rounded-xl shadow-xs py-2.5 px-4 transition-all duration-300 gap-1 ${
             sensorData?.humidityWarning === "WARNING"
-              ? "border-t-blue-600 bg-blue-50/30 ring-2 ring-blue-400"
+              ? "border-t-blue-600 bg-blue-50/30 ring-1 ring-blue-400"
               : "border-t-blue-500"
           }`}
         >
-          <CardContent className="pt-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wide">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 <humidityMeta.Icon
-                  className={`h-5 w-5 ${humidityMeta.iconClass}`}
+                  className={`h-4.5 w-4.5 ${humidityMeta.iconClass}`}
                   strokeWidth={2.5}
                 />
                 {humidityMeta.label}
@@ -341,11 +332,11 @@ const Dashboard: React.FC = () => {
             </div>
 
             {isSensorLoading && !sensorData ? (
-              <SkeletonBox className="h-12 w-32 my-1" />
+              <SkeletonBox className="h-9 w-28 my-1" />
             ) : (
-              <div className="text-5xl font-bold text-slate-900">
+              <div className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
                 {sensorData?.humidity ?? "--"}
-                <span className="text-xl font-medium text-slate-500 ml-1">
+                <span className="text-base font-medium text-slate-500 ml-1">
                   {sensorData?.humidityUnit || humidityMeta.unit}
                 </span>
               </div>
@@ -356,17 +347,17 @@ const Dashboard: React.FC = () => {
         {/* Card Độ sáng */}
         <Card
           size="sm"
-          className={`border-t-4 rounded-xl shadow-sm transition-all duration-300 ${
+          className={`border-t-[3.5px] rounded-xl shadow-xs py-2.5 px-4 transition-all duration-300 gap-1 ${
             sensorData?.lightWarning === "WARNING"
-              ? "border-t-amber-600 bg-amber-50/30 ring-2 ring-amber-400"
+              ? "border-t-amber-600 bg-amber-50/30 ring-1 ring-amber-400"
               : "border-t-amber-500"
           }`}
         >
-          <CardContent className="pt-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-xs text-slate-500 uppercase tracking-wide">
+          <CardContent className="p-0">
+            <div className="flex items-center justify-between mb-0.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 <lightMeta.Icon
-                  className={`h-5 w-5 ${lightMeta.iconClass}`}
+                  className={`h-4.5 w-4.5 ${lightMeta.iconClass}`}
                   strokeWidth={2.5}
                 />
                 {lightMeta.label}
@@ -379,11 +370,11 @@ const Dashboard: React.FC = () => {
             </div>
 
             {isSensorLoading && !sensorData ? (
-              <SkeletonBox className="h-12 w-32 my-1" />
+              <SkeletonBox className="h-9 w-28 my-1" />
             ) : (
-              <div className="text-5xl font-bold text-slate-900">
+              <div className="text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
                 {sensorData?.light ?? "--"}
-                <span className="text-xl font-medium text-slate-500 ml-1">
+                <span className="text-base font-medium text-slate-500 ml-1">
                   {sensorData?.lightUnit || lightMeta.unit}
                 </span>
               </div>
@@ -392,13 +383,13 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Biểu đồ dữ liệu */}
-      <Card className="rounded-xl shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base font-bold text-slate-900">
+      {/* Biểu đồ dữ liệu - flex-1 để tự động lấp đầy phần chiều cao còn lại */}
+      <Card className="flex-1 min-h-[170px] flex flex-col rounded-xl shadow-xs py-2.5 px-4 gap-1.5 overflow-hidden">
+        <CardHeader className="flex-none p-0 pb-1 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm sm:text-base font-bold text-slate-900">
             Biểu đồ dữ liệu môi trường gần đây
           </CardTitle>
-          <div className="flex items-center gap-4 text-xs text-slate-500">
+          <div className="flex items-center gap-3.5 text-xs text-slate-500">
             {(["temperature", "humidity", "light"] as const).map((key) => (
               <span key={key} className="flex items-center gap-1.5">
                 <span
@@ -413,37 +404,43 @@ const Dashboard: React.FC = () => {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="flex-1 min-h-0 p-0 w-full h-full">
           {isChartLoading && chartData.length === 0 ? (
-            <div className="h-[300px] w-full flex items-center justify-center bg-slate-50 rounded-lg">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Loader2 className="h-5 w-5 animate-spin" />
+            <div className="h-full w-full flex items-center justify-center bg-slate-50 rounded-lg">
+              <div className="flex items-center gap-2 text-slate-400 text-xs">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Đang tải dữ liệu biểu đồ...</span>
               </div>
             </div>
           ) : (
-            <ChartContainer config={CHART_CONFIG} className="h-[300px] w-full">
-              <AreaChart data={chartData}>
+            <ChartContainer
+              config={CHART_CONFIG}
+              className="h-full w-full flex-1 aspect-auto min-h-[150px]"
+            >
+              <AreaChart
+                data={chartData}
+                margin={{ top: 8, right: 8, left: -10, bottom: 0 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis
                   dataKey="time"
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 10 }}
                   stroke="#94a3b8"
                 />
                 {/* Trục Y trái: Nhiệt độ (°C) & Độ ẩm (%) */}
                 <YAxis
                   yAxisId="left"
                   domain={CHART_Y_LEFT_DOMAIN}
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 9 }}
                   stroke="#94a3b8"
-                  width={52}
+                  width={44}
                   tickFormatter={(v) => `${v}`}
                   label={{
                     value: "°C / %",
                     angle: -90,
                     position: "insideLeft",
-                    offset: 12,
-                    style: { fontSize: 10, fill: "#94a3b8", fontWeight: 500 },
+                    offset: 14,
+                    style: { fontSize: 9, fill: "#94a3b8", fontWeight: 500 },
                   }}
                 />
                 {/* Trục Y phải: Độ sáng (Lux) */}
@@ -451,16 +448,16 @@ const Dashboard: React.FC = () => {
                   yAxisId="right"
                   orientation="right"
                   domain={CHART_Y_RIGHT_DOMAIN}
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 9 }}
                   stroke="#94a3b8"
-                  width={54}
+                  width={46}
                   tickFormatter={(v) => `${v}`}
                   label={{
                     value: "Lux",
                     angle: 90,
                     position: "insideRight",
-                    offset: 12,
-                    style: { fontSize: 10, fill: "#94a3b8", fontWeight: 500 },
+                    offset: 14,
+                    style: { fontSize: 9, fill: "#94a3b8", fontWeight: 500 },
                   }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -535,16 +532,18 @@ const Dashboard: React.FC = () => {
       </Card>
 
       {/* Điều khiển thiết bị */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="section-title">Điều khiển thiết bị</h2>
+      <div className="flex-none flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900">
+            Điều khiển thiết bị
+          </h2>
 
           {/* Nút gạt bật/tắt toàn bộ */}
           <div className="flex items-center gap-2">
             {isTogglingAll && (
-              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
             )}
-            <span className="text-sm text-slate-600 font-medium">
+            <span className="text-xs sm:text-sm text-slate-600 font-medium">
               {devices.every((d) => d.status === "ON")
                 ? "Tắt toàn bộ"
                 : "Bật toàn bộ"}
@@ -555,19 +554,19 @@ const Dashboard: React.FC = () => {
               onCheckedChange={(checked) =>
                 handleToggleAll(checked ? "ON" : "OFF")
               }
-              className="scale-125 data-checked:bg-blue-500 data-checked:border-blue-500"
+              className="data-checked:bg-blue-500 data-checked:border-blue-500"
             />
           </div>
         </div>
 
         {isDevicesLoading && devices.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <SkeletonBox className="h-16 w-full" />
-            <SkeletonBox className="h-16 w-full" />
-            <SkeletonBox className="h-16 w-full" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <SkeletonBox className="h-14 w-full" />
+            <SkeletonBox className="h-14 w-full" />
+            <SkeletonBox className="h-14 w-full" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {devices.map((device) => {
               const meta = getDeviceSensorMeta(device.id, device.name);
               const isToggling = togglingDeviceId === device.id;
@@ -576,13 +575,13 @@ const Dashboard: React.FC = () => {
               return (
                 <Card
                   key={device.id}
-                  className="flex flex-row items-center gap-3 px-4 py-3 rounded-xl shadow-sm transition-all"
+                  className="flex flex-row items-center gap-3 px-3.5 py-2.5 rounded-xl shadow-xs transition-all"
                 >
                   <div
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${meta.bgClass}`}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${meta.bgClass}`}
                   >
                     <meta.Icon
-                      className={`h-6 w-6 ${meta.iconClass}`}
+                      className={`h-5 w-5 ${meta.iconClass}`}
                       strokeWidth={2.5}
                     />
                   </div>
@@ -606,7 +605,7 @@ const Dashboard: React.FC = () => {
                   {/* Switch điều khiển kèm trạng thái loading */}
                   <div className="flex items-center gap-1.5">
                     {isToggling && (
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />
                     )}
                     <Switch
                       checked={isChecked}
