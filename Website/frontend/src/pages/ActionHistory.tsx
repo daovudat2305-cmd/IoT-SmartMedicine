@@ -10,7 +10,6 @@ import {
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -36,6 +35,7 @@ import {
   PaginationPrevious,
 } from "../components/ui/pagination";
 import { actionApi, deviceApi } from "@/api";
+import { AUTH_STORAGE_KEYS } from "@/api/axiosClient";
 import type {
   ActionHistoryResponse,
   DeviceResponse,
@@ -161,8 +161,15 @@ const ActionHistory: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(ACTION_HISTORY_PAGE_SIZE);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalElements, setTotalElements] = useState<number>(0);
+
+  // Lấy username từ sessionStorage
+  const username =
+    sessionStorage.getItem(AUTH_STORAGE_KEYS.USERNAME) ||
+    sessionStorage.getItem("auth_username") ||
+    "Admin";
 
   useEffect(() => {
     let isMounted = true;
@@ -207,7 +214,7 @@ const ActionHistory: React.FC = () => {
           datetimeFrom,
           datetimeTo,
           page: currentPage,
-          size: ACTION_HISTORY_PAGE_SIZE,
+          size: pageSize,
           sort: sortOrder,
         };
 
@@ -236,6 +243,7 @@ const ActionHistory: React.FC = () => {
       filterDatetime,
       sortOrder,
       currentPage,
+      pageSize,
     ],
   );
 
@@ -243,26 +251,36 @@ const ActionHistory: React.FC = () => {
     fetchActionHistory();
   }, [fetchActionHistory]);
 
-  const handleDeviceChange = (val: string) => {
-    setFilterDevice(val);
-    setCurrentPage(1);
-  };
-  const handleActionChange = (val: string) => {
-    setFilterAction(val);
-    setCurrentPage(1);
-  };
-  const handleStatusChange = (val: string) => {
-    setFilterStatus(val);
-    setCurrentPage(1);
-  };
-  const handleSortChange = (val: string) => {
-    setSortOrder(val as "desc" | "asc");
-    setCurrentPage(1);
+  const handlePageSizeChange = (val: string | null) => {
+    if (val) {
+      setPageSize(Number(val));
+      setCurrentPage(1);
+    }
   };
 
-  const handleDatetimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilterDatetime(e.target.value);
-    setCurrentPage(1);
+  const handleDeviceChange = (val: string | null) => {
+    if (val) {
+      setFilterDevice(val);
+      setCurrentPage(1);
+    }
+  };
+  const handleActionChange = (val: string | null) => {
+    if (val) {
+      setFilterAction(val);
+      setCurrentPage(1);
+    }
+  };
+  const handleStatusChange = (val: string | null) => {
+    if (val) {
+      setFilterStatus(val);
+      setCurrentPage(1);
+    }
+  };
+  const handleSortChange = (val: "desc" | "asc" | null) => {
+    if (val) {
+      setSortOrder(val);
+      setCurrentPage(1);
+    }
   };
 
   const handleClearDatetime = () => {
@@ -500,6 +518,9 @@ const ActionHistory: React.FC = () => {
                 Thiết bị
               </TableHead>
               <TableHead className="text-center text-sm font-semibold text-slate-600 uppercase tracking-wider py-3">
+                User
+              </TableHead>
+              <TableHead className="text-center text-sm font-semibold text-slate-600 uppercase tracking-wider py-3">
                 Hành động
               </TableHead>
               <TableHead className="text-center text-sm font-semibold text-slate-600 uppercase tracking-wider py-3">
@@ -514,7 +535,7 @@ const ActionHistory: React.FC = () => {
           <TableBody>
             {isLoading ? (
               // Skeleton Loading Rows
-              Array.from({ length: ACTION_HISTORY_PAGE_SIZE }).map((_, idx) => (
+              Array.from({ length: pageSize }).map((_, idx) => (
                 <TableRow
                   key={`skeleton-${idx}`}
                   className="border-b last:border-0"
@@ -524,6 +545,9 @@ const ActionHistory: React.FC = () => {
                   </TableCell>
                   <TableCell className="py-3 text-center">
                     <div className="skeleton-box h-5 w-20 mx-auto" />
+                  </TableCell>
+                  <TableCell className="py-3 text-center">
+                    <div className="skeleton-box h-5 w-16 mx-auto" />
                   </TableCell>
                   <TableCell className="py-3 text-center">
                     <div className="skeleton-box h-5 w-14 mx-auto" />
@@ -539,7 +563,7 @@ const ActionHistory: React.FC = () => {
             ) : data.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="h-36 text-center text-slate-400 text-sm"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">
@@ -568,6 +592,11 @@ const ActionHistory: React.FC = () => {
                   {/* Tên Thiết bị */}
                   <TableCell className="text-center font-bold text-[15px] text-slate-800 py-3">
                     {record.deviceName || record.deviceId}
+                  </TableCell>
+
+                  {/* User */}
+                  <TableCell className="text-center font-semibold text-[15px] text-slate-700 py-3">
+                    {username}
                   </TableCell>
 
                   {/* Hành động */}
@@ -607,13 +636,36 @@ const ActionHistory: React.FC = () => {
           </TableBody>
         </Table>
 
-        {/* ── Footer: Số bản ghi + Pagination ── */}
-        <div className="flex items-center justify-between px-4 py-3 border-t">
-          <span className="text-sm text-slate-500">
-            {isLoading
-              ? "Đang tải dữ liệu..."
-              : `Tổng cộng: ${totalElements} bản ghi`}
-          </span>
+        {/* ── Footer: Số bản ghi + PageSize + Pagination ── */}
+        <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-t">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-500">
+              {isLoading
+                ? "Đang tải dữ liệu..."
+                : `Tổng cộng: ${totalElements} bản ghi`}
+            </span>
+
+            <div className="flex items-center gap-1.5 text-sm text-slate-500">
+              <span>Hiển thị:</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={handlePageSizeChange}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="h-8 w-[72px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 10, 20, 50].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>/ trang</span>
+            </div>
+          </div>
 
           {totalPages > 1 && (
             <Pagination className="w-auto mx-0">

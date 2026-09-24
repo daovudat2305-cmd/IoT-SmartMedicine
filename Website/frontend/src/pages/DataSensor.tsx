@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  AlertTriangle,
+  RefreshCw,
+  Search,
+  RotateCcw,
+  X,
+  Copy,
+} from "lucide-react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   Select,
   SelectContent,
@@ -82,6 +90,8 @@ const DataSensor: React.FC = () => {
   const [filterType, setFilterType] = useState<string>("all");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(DATA_SENSOR_PAGE_SIZE);
+  const [searchTime, setSearchTime] = useState<string>("");
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalElements, setTotalElements] = useState<number>(0);
 
@@ -95,7 +105,7 @@ const DataSensor: React.FC = () => {
         const response = await sensorApi.getDataSensors({
           type: filterType,
           page: currentPage,
-          size: DATA_SENSOR_PAGE_SIZE,
+          size: pageSize,
           sort: sortOrder,
         });
 
@@ -119,15 +129,88 @@ const DataSensor: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [filterType, sortOrder, currentPage]);
+  }, [filterType, sortOrder, currentPage, pageSize]);
 
-  const handleFilterChange = (val: string) => {
-    setFilterType(val);
-    setCurrentPage(1);
+  const handleFilterChange = (val: string | null) => {
+    if (val) {
+      setFilterType(val);
+      setCurrentPage(1);
+    }
   };
 
-  const handleSortChange = (val: string) => {
-    setSortOrder(val as "asc" | "desc");
+  const handleSortChange = (val: "asc" | "desc" | null) => {
+    if (val) {
+      setSortOrder(val);
+      setCurrentPage(1);
+    }
+  };
+
+  const handlePageSizeChange = (val: string | null) => {
+    if (val) {
+      setPageSize(Number(val));
+      setCurrentPage(1);
+    }
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    if (!dateStr) return "-";
+    try {
+      const parsed = parseISO(dateStr);
+      if (isNaN(parsed.getTime())) return dateStr;
+      return format(parsed, "HH:mm:ss dd-MM-yyyy");
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Lọc dữ liệu client-side theo thời gian và giá trị (value) cảm biến
+  const filteredData = useMemo(() => {
+    if (!searchTime.trim()) return data;
+    const term = searchTime.trim().toLowerCase();
+    const dashTerm = term.replace(/\//g, "-");
+    const slashTerm = term.replace(/-/g, "/");
+
+    return data.filter((record) => {
+      // 1. Khớp thời gian (format HH:mm:ss dd-MM-yyyy, dd/MM/yyyy và chuỗi ISO gốc)
+      const formatted = formatDateTime(record.time).toLowerCase();
+      const slashFormatted = formatted.replace(/-/g, "/");
+      const raw = (record.time || "").toLowerCase();
+
+      const isTimeMatch =
+        formatted.includes(term) ||
+        formatted.includes(dashTerm) ||
+        slashFormatted.includes(term) ||
+        slashFormatted.includes(slashTerm) ||
+        raw.includes(term) ||
+        raw.includes(dashTerm);
+
+      if (isTimeMatch) return true;
+
+      // 2. Khớp Giá trị (Value) và Đơn vị (Unit)
+      const valStr =
+        record.value !== null && record.value !== undefined
+          ? String(record.value)
+          : "";
+      const unitStr = (record.unit || "").toLowerCase();
+      const fullVal = `${valStr} ${unitStr}`.toLowerCase();
+      const compactVal = `${valStr}${unitStr}`.toLowerCase();
+
+      const isValueMatch =
+        valStr.includes(term) ||
+        fullVal.includes(term) ||
+        compactVal.includes(term);
+
+      return isValueMatch;
+    });
+  }, [data, searchTime]);
+
+  const isFiltered =
+    filterType !== "all" || sortOrder !== "desc" || searchTime.trim() !== "";
+
+  const handleResetFilters = () => {
+    setFilterType("all");
+    setSortOrder("desc");
+    setSearchTime("");
     setCurrentPage(1);
   };
 
@@ -137,7 +220,7 @@ const DataSensor: React.FC = () => {
       const response = await sensorApi.getDataSensors({
         type: filterType,
         page: currentPage,
-        size: DATA_SENSOR_PAGE_SIZE,
+        size: pageSize,
         sort: sortOrder,
       });
       if (response.success && response.data) {
@@ -153,17 +236,6 @@ const DataSensor: React.FC = () => {
     }
   };
 
-  const formatDateTime = (dateStr: string) => {
-    if (!dateStr) return "-";
-    try {
-      const parsed = parseISO(dateStr);
-      if (isNaN(parsed.getTime())) return dateStr;
-      return format(parsed, "HH:mm:ss dd-MM-yyyy");
-    } catch {
-      return dateStr;
-    }
-  };
-
   return (
     <div className="page-container">
       {/* Header trang */}
@@ -174,30 +246,45 @@ const DataSensor: React.FC = () => {
             Tra cứu và giám sát dữ liệu môi trường theo thời gian thực
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="gap-1.5 text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 cursor-pointer transition-colors"
-        >
-          <RefreshCw
-            className={`h-4 w-4 ${isLoading ? "animate-spin text-primary" : ""}`}
-          />
-          Làm mới
-        </Button>
+        <div className="flex items-center gap-2">
+          {isFiltered && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetFilters}
+              className="gap-1 text-slate-500 hover:text-slate-700 cursor-pointer"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Đặt lại
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="gap-1.5 text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 cursor-pointer transition-colors"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${isLoading ? "animate-spin text-primary" : ""}`}
+            />
+            Làm mới
+          </Button>
+        </div>
       </div>
 
-      {/* Card bộ lọc */}
+      {/* Card bộ lọc căn chỉnh 3 cột cân đối */}
       <Card className="rounded-xl shadow-sm p-4">
-        <div className="flex flex-wrap items-end gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           {/* Filter: Loại cảm biến */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-600">
-              Loại cảm biến
-            </label>
+          <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex items-center justify-between h-5">
+              <label className="text-sm font-medium text-slate-600">
+                Loại cảm biến
+              </label>
+            </div>
             <Select value={filterType} onValueChange={handleFilterChange}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-full !h-9">
                 <SelectValue>
                   {
                     SENSOR_TYPE_OPTIONS.find((o) => o.value === filterType)
@@ -216,12 +303,14 @@ const DataSensor: React.FC = () => {
           </div>
 
           {/* Filter: Sắp xếp theo thời gian */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-600">
-              Sắp xếp thời gian
-            </label>
+          <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex items-center justify-between h-5">
+              <label className="text-sm font-medium text-slate-600">
+                Sắp xếp
+              </label>
+            </div>
             <Select value={sortOrder} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-52">
+              <SelectTrigger className="w-full !h-9">
                 <SelectValue>
                   {SORT_OPTIONS.find((o) => o.value === sortOrder)?.label}
                 </SelectValue>
@@ -234,6 +323,45 @@ const DataSensor: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Filter: Tìm kiếm theo thời gian & giá trị */}
+          <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex items-center justify-between h-5">
+              <label className="text-sm font-medium text-slate-600">
+                Tìm kiếm thời gian / giá trị
+              </label>
+              {searchTime && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTime("")}
+                  className="text-xs text-blue-600 hover:underline flex items-center gap-0.5 cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                  Xóa
+                </button>
+              )}
+            </div>
+            <div className="relative flex items-center w-full">
+              <Search className="absolute left-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="VD: 14:30:00, 23-09-2026, 28°C..."
+                value={searchTime}
+                onChange={(e) => setSearchTime(e.target.value)}
+                className="pl-8 pr-8 !h-9 bg-background border-input w-full"
+              />
+              {searchTime && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTime("")}
+                  className="absolute right-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  title="Xóa tìm kiếm"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </Card>
@@ -260,8 +388,11 @@ const DataSensor: React.FC = () => {
           <TableBody>
             {isLoading ? (
               // Skeleton Loading Rows
-              Array.from({ length: DATA_SENSOR_PAGE_SIZE }).map((_, idx) => (
-                <TableRow key={`skeleton-${idx}`} className="border-b last:border-0">
+              Array.from({ length: pageSize }).map((_, idx) => (
+                <TableRow
+                  key={`skeleton-${idx}`}
+                  className="border-b last:border-0"
+                >
                   <TableCell className="py-3 text-center">
                     <div className="skeleton-box h-5 w-10 mx-auto" />
                   </TableCell>
@@ -276,17 +407,33 @@ const DataSensor: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ))
-            ) : data.length === 0 ? (
+            ) : filteredData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={4}
                   className="h-36 text-center text-slate-500"
                 >
-                  Không tìm thấy bản ghi dữ liệu nào phù hợp.
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <p>
+                      {searchTime.trim()
+                        ? `Không tìm thấy bản ghi nào khớp với từ khóa "${searchTime}".`
+                        : "Không tìm thấy bản ghi dữ liệu nào phù hợp."}
+                    </p>
+                    {searchTime && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        onClick={() => setSearchTime("")}
+                        className="text-xs text-blue-600"
+                      >
+                        Xóa từ khóa tìm kiếm
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((record) => {
+              filteredData.map((record) => {
                 const isWarning = record.warningLevel === "WARNING";
                 const displayValue =
                   record.value !== null && record.value !== undefined
@@ -297,7 +444,7 @@ const DataSensor: React.FC = () => {
                   <TableRow key={record.id} className="table-data-row">
                     {/* ID */}
                     <TableCell className="text-center font-bold text-[15px] text-slate-800 py-3">
-                      {record.id}
+                      #{record.id}
                     </TableCell>
 
                     {/* Loại cảm biến */}
@@ -328,8 +475,26 @@ const DataSensor: React.FC = () => {
                     </TableCell>
 
                     {/* Thời gian */}
-                    <TableCell className="text-center text-[15px] text-slate-500 py-3">
-                      {formatDateTime(record.time)}
+                    <TableCell
+                      className="text-center text-[15px] text-slate-500 py-3 select-all cursor-text group"
+                      title="Click để copy thời gian"
+                    >
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        {formatDateTime(record.time)}
+                        <button
+                          type="button"
+                          className="opacity-0 group-hover:opacity-60 hover:!opacity-100 text-slate-400 hover:text-slate-600 transition-opacity cursor-pointer"
+                          title="Copy thời gian"
+                          onClick={() => {
+                            navigator.clipboard.writeText(
+                              formatDateTime(record.time),
+                            );
+                            toast.success("Đã copy thời gian vào clipboard");
+                          }}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
                     </TableCell>
                   </TableRow>
                 );
@@ -338,13 +503,37 @@ const DataSensor: React.FC = () => {
           </TableBody>
         </Table>
 
-        {/* Footer: Tổng số bản ghi + Phân trang */}
-        <div className="flex items-center justify-between px-4 py-3 border-t">
-          <span className="text-sm text-slate-500">
-            {isLoading
-              ? "Đang tải dữ liệu..."
-              : `Tổng cộng: ${totalElements} bản ghi`}
-          </span>
+        {/* Footer: Tổng số bản ghi + PageSize + Phân trang */}
+        <div className="flex flex-wrap items-center justify-between gap-4 px-4 py-3 border-t">
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-slate-500">
+              {isLoading
+                ? "Đang tải dữ liệu..."
+                : searchTime.trim()
+                  ? `Hiển thị: ${filteredData.length}/${data.length} bản ghi (trang ${currentPage})`
+                  : `Tổng cộng: ${totalElements} bản ghi`}
+            </span>
+            <div className="flex items-center gap-1.5 text-sm text-slate-500">
+              <span>Hiển thị:</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={handlePageSizeChange}
+                disabled={isLoading}
+              >
+                <SelectTrigger className="h-8 w-[72px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[5, 7, 10, 20, 50].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>/ trang</span>
+            </div>
+          </div>
           <Pagination className="w-auto mx-0">
             <PaginationContent>
               {/* Nút Previous */}
