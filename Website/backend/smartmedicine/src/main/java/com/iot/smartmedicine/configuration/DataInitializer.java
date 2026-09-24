@@ -52,7 +52,7 @@ public class DataInitializer {
                     .github("https://github.com/daovudat2305-cmd/IoT-SmartMedicine.git")
                     .figma("https://www.figma.com/design/94c6AmnyR6lT7STOBCiEAu/IoT?node-id=0-1")
                     .docs("https://docs.google.com/document/d/1qIOQnBkG7CbFp9NUeo_Eo19hvopRM9KnJYZFAgV4SdI/edit?usp=sharing")
-                    .apiDocs("https://docs.google.com/spreadsheets/d/10UtQFcamvfssBHPwCm3Xl5zW6l89ydFq3iFJkjyMs-Y/edit?usp=sharing")
+                    .apiDocs("https://daovudat2305-cmd-7597460.postman.co/workspace/test~ce44f413-27ed-4b65-a7ee-053d9950967a/request/51470110-ca686129-0219-495f-9acc-3e6898804ef3?action=share&creator=51470110")
                     .build();
             userRepository.save(defaultUser);
             log.info("Khoi tao user mac dinh thanh cong: {}", defaultEmail);
