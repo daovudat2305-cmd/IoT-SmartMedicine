@@ -92,8 +92,20 @@ const DataSensor: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(DATA_SENSOR_PAGE_SIZE);
   const [searchTime, setSearchTime] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [totalPages, setTotalPages] = useState<number>(1);
   const [totalElements, setTotalElements] = useState<number>(0);
+
+  // Debounce ô tìm kiếm 500ms và đưa về trang 1 mỗi khi thay đổi từ khóa
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTime.trim());
+      setCurrentPage(1);
+    }, 500);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTime]);
 
   // Gọi API lấy dữ liệu với cơ chế chống Race Condition
   useEffect(() => {
@@ -104,6 +116,7 @@ const DataSensor: React.FC = () => {
       try {
         const response = await sensorApi.getDataSensors({
           type: filterType,
+          search: debouncedSearch || undefined,
           page: currentPage,
           size: pageSize,
           sort: sortOrder,
@@ -129,7 +142,7 @@ const DataSensor: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [filterType, sortOrder, currentPage, pageSize]);
+  }, [filterType, sortOrder, currentPage, pageSize, debouncedSearch]);
 
   const handleFilterChange = (val: string | null) => {
     if (val) {
@@ -163,47 +176,6 @@ const DataSensor: React.FC = () => {
     }
   };
 
-  // Lọc dữ liệu client-side theo thời gian và giá trị (value) cảm biến
-  const filteredData = useMemo(() => {
-    if (!searchTime.trim()) return data;
-    const term = searchTime.trim().toLowerCase();
-    const dashTerm = term.replace(/\//g, "-");
-    const slashTerm = term.replace(/-/g, "/");
-
-    return data.filter((record) => {
-      // 1. Khớp thời gian (format HH:mm:ss dd-MM-yyyy, dd/MM/yyyy và chuỗi ISO gốc)
-      const formatted = formatDateTime(record.time).toLowerCase();
-      const slashFormatted = formatted.replace(/-/g, "/");
-      const raw = (record.time || "").toLowerCase();
-
-      const isTimeMatch =
-        formatted.includes(term) ||
-        formatted.includes(dashTerm) ||
-        slashFormatted.includes(term) ||
-        slashFormatted.includes(slashTerm) ||
-        raw.includes(term) ||
-        raw.includes(dashTerm);
-
-      if (isTimeMatch) return true;
-
-      // 2. Khớp Giá trị (Value) và Đơn vị (Unit)
-      const valStr =
-        record.value !== null && record.value !== undefined
-          ? String(record.value)
-          : "";
-      const unitStr = (record.unit || "").toLowerCase();
-      const fullVal = `${valStr} ${unitStr}`.toLowerCase();
-      const compactVal = `${valStr}${unitStr}`.toLowerCase();
-
-      const isValueMatch =
-        valStr.includes(term) ||
-        fullVal.includes(term) ||
-        compactVal.includes(term);
-
-      return isValueMatch;
-    });
-  }, [data, searchTime]);
-
   const isFiltered =
     filterType !== "all" || sortOrder !== "desc" || searchTime.trim() !== "";
 
@@ -211,6 +183,7 @@ const DataSensor: React.FC = () => {
     setFilterType("all");
     setSortOrder("desc");
     setSearchTime("");
+    setDebouncedSearch("");
     setCurrentPage(1);
   };
 
@@ -219,6 +192,7 @@ const DataSensor: React.FC = () => {
     try {
       const response = await sensorApi.getDataSensors({
         type: filterType,
+        search: debouncedSearch || undefined,
         page: currentPage,
         size: pageSize,
         sort: sortOrder,
@@ -354,7 +328,11 @@ const DataSensor: React.FC = () => {
               {searchTime && (
                 <button
                   type="button"
-                  onClick={() => setSearchTime("")}
+                  onClick={() => {
+                    setSearchTime("");
+                    setDebouncedSearch("");
+                    setCurrentPage(1);
+                  }}
                   className="absolute right-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                   title="Xóa tìm kiếm"
                 >
@@ -407,7 +385,7 @@ const DataSensor: React.FC = () => {
                   </TableCell>
                 </TableRow>
               ))
-            ) : filteredData.length === 0 ? (
+            ) : data.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={4}
@@ -423,7 +401,11 @@ const DataSensor: React.FC = () => {
                       <Button
                         variant="link"
                         size="sm"
-                        onClick={() => setSearchTime("")}
+                        onClick={() => {
+                          setSearchTime("");
+                          setDebouncedSearch("");
+                          setCurrentPage(1);
+                        }}
                         className="text-xs text-blue-600"
                       >
                         Xóa từ khóa tìm kiếm
@@ -433,7 +415,7 @@ const DataSensor: React.FC = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredData.map((record) => {
+              data.map((record) => {
                 const isWarning = record.warningLevel === "WARNING";
                 const displayValue =
                   record.value !== null && record.value !== undefined
@@ -509,8 +491,8 @@ const DataSensor: React.FC = () => {
             <span className="text-sm text-slate-500">
               {isLoading
                 ? "Đang tải dữ liệu..."
-                : searchTime.trim()
-                  ? `Hiển thị: ${filteredData.length}/${data.length} bản ghi (trang ${currentPage})`
+                : debouncedSearch
+                  ? `Tìm thấy: ${totalElements} bản ghi khớp từ khóa`
                   : `Tổng cộng: ${totalElements} bản ghi`}
             </span>
             <div className="flex items-center gap-1.5 text-sm text-slate-500">

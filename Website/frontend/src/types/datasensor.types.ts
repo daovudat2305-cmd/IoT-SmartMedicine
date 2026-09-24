@@ -32,6 +32,7 @@ export interface DataSensorResponse {
 
 export interface GetDataSensorsParams {
   type?: "all" | "temperature" | "humidity" | "light" | string;
+  search?: string;
   page?: number;
   size?: number;
   sort?: "desc" | "asc" | string;
