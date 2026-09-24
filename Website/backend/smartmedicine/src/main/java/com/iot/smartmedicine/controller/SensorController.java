@@ -41,6 +41,7 @@ public class SensorController {
     @GetMapping()
     public ApiResponse<PageResponse<DataSensorResponse>> getDataSensors(
         @RequestParam(required = false, defaultValue = "all") String type,
+        @RequestParam(required = false) String search,
         @RequestParam(required = false, defaultValue = "1") int page,
         @RequestParam(required = false, defaultValue = "10") int size,
         @RequestParam(required = false, defaultValue = "desc") String sort
@@ -48,7 +49,7 @@ public class SensorController {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 100);
 
-        PageResponse<DataSensorResponse> data = sensorService.getDataSensors(type, safePage, safeSize, sort);
+        PageResponse<DataSensorResponse> data = sensorService.getDataSensors(type, search, safePage, safeSize, sort);
 
         return ApiResponse.success(data, "Lấy lịch sử dữ liệu cảm biến thành công");
     }

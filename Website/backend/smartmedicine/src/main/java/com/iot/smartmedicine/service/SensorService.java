@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.iot.smartmedicine.common.SensorDataType;
 import com.iot.smartmedicine.common.WarningLevel;
@@ -67,7 +68,8 @@ public class SensorService {
         return response;
     }
 
-    public PageResponse<DataSensorResponse> getDataSensors(String dataType, int page, int size, String sort) {
+    @Transactional (readOnly = true)
+    public PageResponse<DataSensorResponse> getDataSensors(String dataType, String search, int page, int size, String sort) {
         Sort pageSort = Sort.by("time").descending();
 
         if("asc".equalsIgnoreCase(sort)) {
@@ -77,13 +79,15 @@ public class SensorService {
         Pageable pageable = PageRequest.of(page - 1, size, pageSort);
 
         SensorDataType sensorDataType = null;
-        if(dataType != null && !dataType.isBlank()) {
+        if (dataType != null && !dataType.isBlank() && !"all".equalsIgnoreCase(dataType.trim())) {
             try {
                 sensorDataType = SensorDataType.valueOf(dataType.trim().toLowerCase());
             } catch (Exception e) { }
         }
 
-        Page<DataSensor> dataSensorPage = dataSensorRepository.findAllWithFilter(sensorDataType, pageable);
+        String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
+
+        Page<DataSensor> dataSensorPage = dataSensorRepository.findAllWithFilter(sensorDataType, cleanSearch, pageable);
 
         List<DataSensor> dataSensors = dataSensorPage.getContent();
 

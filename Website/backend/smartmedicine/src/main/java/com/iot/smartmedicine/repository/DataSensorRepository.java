@@ -21,11 +21,38 @@ public interface DataSensorRepository extends JpaRepository<DataSensor,Long>{
 
     List<DataSensor> findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType dataType);
 
-    @Query ("""
+    @Query (value = """
         SELECT ds FROM DataSensor ds
         JOIN ds.sensor s
         WHERE (:dataType IS NULL OR s.dataType = :dataType)
+        AND (
+            :keyword IS NULL OR
+            CAST(ds.value AS String) LIKE CONCAT('%', :keyword, '%') OR
+            ds.unit LIKE CONCAT('%', :keyword, '%') OR
+            CONCAT(CAST(ds.value AS String), ds.unit) LIKE CONCAT('%', :keyword, '%') OR
+            CONCAT(CAST(ds.value AS String), ' ', ds.unit) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%Y-%m-%d %H:%i:%s') AS String) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%d-%m-%Y %H:%i:%s') AS String) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%d/%m/%Y %H:%i:%s') AS String) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%H:%i:%s %d-%m-%Y') AS String) LIKE CONCAT('%', :keyword, '%')
+        )
+    """,
+    countQuery = """
+        SELECT COUNT(ds) FROM DataSensor ds
+        JOIN ds.sensor s
+        WHERE (:dataType IS NULL OR s.dataType = :dataType)
+        AND (
+            :keyword IS NULL OR
+            CAST(ds.value AS String) LIKE CONCAT('%', :keyword, '%') OR
+            ds.unit LIKE CONCAT('%', :keyword, '%') OR
+            CONCAT(CAST(ds.value AS String), ds.unit) LIKE CONCAT('%', :keyword, '%') OR
+            CONCAT(CAST(ds.value AS String), ' ', ds.unit) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%Y-%m-%d %H:%i:%s') AS String) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%d-%m-%Y %H:%i:%s') AS String) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%d/%m/%Y %H:%i:%s') AS String) LIKE CONCAT('%', :keyword, '%') OR
+            CAST(FUNCTION('DATE_FORMAT', ds.time, '%H:%i:%s %d-%m-%Y') AS String) LIKE CONCAT('%', :keyword, '%')
+        )     
     """)
     @EntityGraph (attributePaths = {"sensor"})
-    Page<DataSensor> findAllWithFilter(@Param("dataType") SensorDataType dataType,Pageable pageable);
+    Page<DataSensor> findAllWithFilter(@Param("dataType") SensorDataType dataType, @Param("keyword") String keyword, Pageable pageable);
 }
