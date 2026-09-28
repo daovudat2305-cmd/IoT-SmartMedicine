@@ -34,10 +34,21 @@ void setup_wifi() {
 
   WiFi.begin(ssid, password);
 
-  while(WiFi.status() != WL_CONNECTED) {
+  int retryCount = 0;
+  const int MAX_RETRY = 40; // 40 × 500ms = 20 giây tối đa
+
+  while(WiFi.status() != WL_CONNECTED && retryCount < MAX_RETRY) {
     delay(500);
     Serial.print(".");
+    retryCount++;
   }
+
+  if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("\n[LỖI] Không thể kết nối WiFi sau 20 giây. Đang reset ESP32...");
+      delay(1000);
+      ESP.restart(); //Tự động restart thay vì treo máy
+  }
+
   Serial.println("\nWifi đã kết nối");
   Serial.print("ESP32 IP: ");
   Serial.println(WiFi.localIP());

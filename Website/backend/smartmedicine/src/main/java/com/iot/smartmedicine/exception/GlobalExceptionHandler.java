@@ -2,6 +2,7 @@ package com.iot.smartmedicine.exception;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,11 +36,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(errorCode.getHttpStatus()).body(response);
     }
 
+    @ExceptionHandler(TimeoutException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTimeoutException(TimeoutException exception) {
+        log.warn("TimeoutException: {}", exception.getMessage());
+        ErrorCode errorCode = ErrorCode.DEVICE_NOT_RESPONDING;
+        return ResponseEntity.status(errorCode.getHttpStatus())
+            .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
+    }
+
     @ExceptionHandler ({CompletionException.class, ExecutionException.class})
     public ResponseEntity<ApiResponse<Void>> handleAsyncException(Exception exception) {
         Throwable cause = exception.getCause();
         if(cause instanceof AppException appEx) {
             return handleAppException(appEx);
+        }
+
+        if(cause instanceof TimeoutException) {
+            ErrorCode errorCode = ErrorCode.DEVICE_NOT_RESPONDING;
+            return ResponseEntity.status(errorCode.getHttpStatus())
+                .body(ApiResponse.error(errorCode.getCode(), errorCode.getMessage()));
         }
         return handleException(exception);
     }

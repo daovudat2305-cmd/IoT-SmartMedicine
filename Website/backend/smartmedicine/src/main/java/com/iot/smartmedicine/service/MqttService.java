@@ -5,6 +5,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -62,9 +64,16 @@ public class MqttService {
     @Value("${mqtt.topics.device-status-resp:device_status_resp}")
     private String deviceStatusRespTopic;
 
+    //map cache tránh query db 3 lần mỗi 2s
+    private Map<SensorDataType, Sensor> sensorCache;
+
     //khởi tạo callback lắng nghe service
     @PostConstruct 
     public void init() {
+        // Load tất cả sensor 1 lần duy nhất
+        sensorCache = sensorRepository.findAll().stream()
+            .collect(Collectors.toMap(Sensor::getDataType, s -> s));
+
         mqttClient.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverUrl) {
@@ -244,7 +253,7 @@ public class MqttService {
 
     //đánh giá ngưỡng cảnh báo
     private DataSensor buildSensorReading(SensorDataType dataType, BigDecimal value, String unit, LocalDateTime timestamp) {
-        Sensor sensor = sensorRepository.findByDataType(dataType).orElse(null);
+        Sensor sensor = sensorCache.get(dataType);
 
         if(sensor == null) {
             log.warn("Chưa có cấu hình cho loại cảm biến {} trong database! Vui lòng thêm dữ liệu vào bảng sensors.", dataType);
@@ -293,4 +302,12 @@ public class MqttService {
             log.error("Lỗi khi publish tin nhắn tới topic {}: {}", topic, e.getMessage());
         }
     }
+
+    // phục vụ khi cần điều chỉnh ngưỡng cảnh báo
+    public void refreshSensorCache() {
+        sensorCache = sensorRepository.findAll().stream()
+            .collect(Collectors.toMap(Sensor::getDataType, s -> s));
+        log.info("Đã làm mới sensorCache với {} sensor.", sensorCache.size());
+    }
+
 }

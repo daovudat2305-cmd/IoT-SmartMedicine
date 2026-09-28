@@ -1,9 +1,13 @@
 package com.iot.smartmedicine.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -87,6 +91,7 @@ public class SensorService {
 
         String cleanSearch = (search != null && !search.isBlank()) ? search.trim() : null;
 
+        //tìm kiếm
         Page<DataSensor> dataSensorPage = dataSensorRepository.findAllWithFilter(sensorDataType, cleanSearch, pageable);
 
         List<DataSensor> dataSensors = dataSensorPage.getContent();
@@ -112,24 +117,30 @@ public class SensorService {
     }
 
     public List<SensorChartResponse> getChartData() {
-        List<DataSensor> temperatureList = dataSensorRepository.findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType.temperature);
-
-        List<DataSensor> humidityList = dataSensorRepository.findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType.humidity);
-
-        List<DataSensor> lightList = dataSensorRepository.findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType.light);
-
-        int size = Math.min(temperatureList.size(), Math.min(humidityList.size(), lightList.size()));
-        List<SensorChartResponse> chartList = new ArrayList<>();
-
-        for(int i=0; i<size; i++) {
-            chartList.add(SensorChartResponse.builder()
-                .temperature(temperatureList.get(i).getValue())
-                .humidity(humidityList.get(i).getValue())
-                .light(lightList.get(i).getValue())
-                .time(temperatureList.get(i).getTime())
-                .build()
-            );
+        // Lấy tối đa 60 bản ghi gần nhất (20 mốc × 3 loại)
+        List<DataSensor> allRecent = dataSensorRepository
+            .findTop60ForChart(PageRequest.of(0, 60));
+        // Nhóm theo thời gian (LocalDateTime) — key là mốc thời gian
+        Map<LocalDateTime, Map<SensorDataType, BigDecimal>> grouped = new LinkedHashMap<>();
+        for (DataSensor ds : allRecent) {
+            grouped
+                .computeIfAbsent(ds.getTime(), k -> new EnumMap<>(SensorDataType.class))
+                .put(ds.getSensor().getDataType(), ds.getValue());
         }
+
+        // Chỉ lấy các mốc thời gian có đủ cả 3 loại
+        List<SensorChartResponse> chartList = grouped.entrySet().stream()
+            .filter(e -> e.getValue().containsKey(SensorDataType.temperature)
+                    && e.getValue().containsKey(SensorDataType.humidity)
+                    && e.getValue().containsKey(SensorDataType.light))
+            .limit(20)
+            .map(e -> SensorChartResponse.builder()
+                .temperature(e.getValue().get(SensorDataType.temperature))
+                .humidity(e.getValue().get(SensorDataType.humidity))
+                .light(e.getValue().get(SensorDataType.light))
+                .time(e.getKey())
+                .build())
+            .collect(Collectors.toList());
 
         //đảo ngược danh sách
         Collections.reverse(chartList);

@@ -70,6 +70,7 @@ const Dashboard: React.FC = () => {
     sensorData,
     isConnected,
     isLoading: isSensorLoading,
+    error: sensorError,
   } = useSensorRealtime();
 
   // 2. Realtime Hardware Status (Lỗi cảm biến)
@@ -80,6 +81,7 @@ const Dashboard: React.FC = () => {
     devices,
     setDevices,
     isLoading: isDevicesLoading,
+    error: devicesError,
   } = useDeviceStatus();
 
   // 4. Biểu đồ lịch sử (20 điểm gần nhất)
@@ -98,7 +100,19 @@ const Dashboard: React.FC = () => {
     if (sensorData && hardwareStatus?.status === "error") {
       clearStatus(); // Cảm biến đã hoạt động lại bình thường
     }
-  }, [sensorData]);
+  }, [sensorData, hardwareStatus, clearStatus]);
+
+  useEffect(() => {
+    if (sensorError) {
+      toast.error("Không thể tải dữ liệu cảm biến: " + sensorError);
+    }
+  }, [sensorError]);
+
+  useEffect(() => {
+    if (devicesError) {
+      toast.error("Không thể tải danh sách thiết bị: " + devicesError);
+    }
+  }, [devicesError]);
 
   // Fetch dữ liệu biểu đồ
   useEffect(() => {

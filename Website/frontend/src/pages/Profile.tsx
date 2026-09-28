@@ -67,7 +67,7 @@ const Profile: React.FC = () => {
     {
       id: "doc-guide",
       title: "Tài liệu báo cáo",
-      description: "Complete guide for Smart Classroom IoT system",
+      description: "Complete guide for Smart Medicine IoT system",
       tag: "DOCS",
       tagClass: "bg-blue-100 text-blue-700 hover:bg-blue-100 border-none",
       icon: FileText,
@@ -113,9 +113,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="page-container space-y-4">
-      <h1 className="page-title tracking-tight">
-        Thông tin cá nhân
-      </h1>
+      <h1 className="page-title tracking-tight">Thông tin cá nhân</h1>
 
       {/* ─── BANNER PROFILE ─── */}
       <div
@@ -173,9 +171,7 @@ const Profile: React.FC = () => {
 
       {/* ─── MỤC TÀI LIỆU ─── */}
       <div>
-        <h2 className="section-title mb-2.5 tracking-tight">
-          Tài liệu
-        </h2>
+        <h2 className="section-title mb-2.5 tracking-tight">Tài liệu</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {isLoading
             ? /* Skeleton Loading cho 4 cards tài liệu */

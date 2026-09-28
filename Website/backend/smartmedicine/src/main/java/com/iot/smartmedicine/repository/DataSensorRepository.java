@@ -1,5 +1,6 @@
 package com.iot.smartmedicine.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +21,10 @@ public interface DataSensorRepository extends JpaRepository<DataSensor,Long>{
     Optional<DataSensor> findTopBySensor_DataTypeOrderByTimeDesc(SensorDataType dataType);
 
     List<DataSensor> findTop20BySensor_DataTypeOrderByTimeDesc(SensorDataType dataType);
+
+    // Lấy top 20 bản ghi gần nhất không phân biệt loại, để lấy 20 mốc thời gian (20 x 3)
+    @Query("SELECT ds FROM DataSensor ds ORDER BY ds.time DESC")
+    List<DataSensor> findTop60ForChart(Pageable pageable);
 
     @Query (value = """
         SELECT ds FROM DataSensor ds
@@ -54,5 +59,9 @@ public interface DataSensorRepository extends JpaRepository<DataSensor,Long>{
         )     
     """)
     @EntityGraph (attributePaths = {"sensor"})
-    Page<DataSensor> findAllWithFilter(@Param("dataType") SensorDataType dataType, @Param("keyword") String keyword, Pageable pageable);
+    Page<DataSensor> findAllWithFilter(
+        @Param("dataType") SensorDataType dataType, 
+        @Param("keyword") String keyword, 
+        Pageable pageable
+    );
 }

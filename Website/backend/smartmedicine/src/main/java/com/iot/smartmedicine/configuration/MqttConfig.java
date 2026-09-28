@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.eclipse.paho.client.mqttv3.IMqttClient;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -35,40 +36,41 @@ public class MqttConfig {
 
     @Bean 
     public IMqttClient mqttClient() {
+        // Nối thêm chuỗi ngẫu nhiên tránh xung đột Client ID khi restart server
+        String uniqueClientId = clientId + "_" + UUID.randomUUID().toString().substring(0, 5);
+        
+        // Khởi tạo MqttClient với bộ nhớ tạm RAM (MemoryPersistence)
+        IMqttClient client;
         try {
-            // Nối thêm chuỗi ngẫu nhiên tránh xung đột Client ID khi restart server
-            String uniqueClientId = clientId + "_" + UUID.randomUUID().toString().substring(0, 5);
-            // Khởi tạo MqttClient với bộ nhớ tạm RAM (MemoryPersistence)
-            IMqttClient client = new MqttClient(brokerUrl, uniqueClientId, new MemoryPersistence());
-
-            // Thiết lập các thuộc tính kết nối
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setCleanSession(true);              // Xóa session cũ khi kết nối
-            options.setAutomaticReconnect(true);        // Tự động kết nối lại nếu rớt mạng
-            options.setConnectionTimeout(connectionTimeout);
-            options.setKeepAliveInterval(keepAliveInterval);
-            
-            // Kiểm tra username/password nếu có
-            if (username != null && !username.isBlank()) {
-                options.setUserName(username);
-            }
-            if (password != null && !password.isBlank()) {
-                options.setPassword(password.toCharArray());
-            }
-
-            try {
-                log.info("Đang kết nối tới MQTT Broker: {}", brokerUrl);
-                client.connect(options);
-                log.info("Kết nối MQTT Broker thành công với Client ID: {}", uniqueClientId);
-            } catch (Exception e) {
-                log.warn("Chưa thể kết nối tới MQTT Broker khi khởi động ({}). Paho sẽ tự động kết nối lại khi Broker khả dụng.", e.getMessage());
-            }
-            
-            return client;
-        } catch (Exception e) {
-            log.error("Lỗi khi kết nối MQTT Broker tại {}: {}", brokerUrl, e.getMessage());
-            // Ném lỗi để thông báo nếu Broker chưa bật (Mosquitto chưa chạy)
-            throw new RuntimeException("Không thể kết nối MQTT Broker: " + e.getMessage(), e);
+            client = new MqttClient(brokerUrl, uniqueClientId, new MemoryPersistence());
+        } catch (MqttException e) {
+            // MqttClient() hiếm khi lỗi, nhưng nếu có thì không thể tiếp tục
+            throw new RuntimeException("Không thể khởi tạo MQTT Client: " + e.getMessage(), e);
         }
+
+        // Thiết lập các thuộc tính kết nối
+        MqttConnectOptions options = new MqttConnectOptions();
+        options.setCleanSession(true);              // Xóa session cũ khi kết nối
+        options.setAutomaticReconnect(true);        // Tự động kết nối lại nếu rớt mạng
+        options.setConnectionTimeout(connectionTimeout);
+        options.setKeepAliveInterval(keepAliveInterval);
+        
+        // Kiểm tra username/password nếu có
+        if (username != null && !username.isBlank()) {
+            options.setUserName(username);
+        }
+        if (password != null && !password.isBlank()) {
+            options.setPassword(password.toCharArray());
+        }
+
+        try {
+            log.info("Đang kết nối tới MQTT Broker: {}", brokerUrl);
+            client.connect(options);
+            log.info("Kết nối MQTT Broker thành công với Client ID: {}", uniqueClientId);
+        } catch (Exception e) {
+            log.warn("Chưa thể kết nối tới MQTT Broker khi khởi động ({}). Paho sẽ tự động kết nối lại khi Broker khả dụng.", e.getMessage());
+        }
+        
+        return client;
     }
 }

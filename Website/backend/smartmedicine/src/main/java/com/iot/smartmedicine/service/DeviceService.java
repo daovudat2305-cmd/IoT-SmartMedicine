@@ -52,6 +52,7 @@ public class DeviceService {
         try {
             JsonNode node = objectMapper.readTree(payload);
             List<DeviceResponse> updatedDevices = new ArrayList<>();
+            List<Device> devicesToSave = new ArrayList<>();
 
             node.properties().forEach(entry -> {
                 String deviceId = entry.getKey();
@@ -61,7 +62,7 @@ public class DeviceService {
                     try {
                         device.setStatus(DeviceStatus.valueOf(statusStr.toUpperCase()));
                         device.setUpdatedAt(LocalDateTime.now());
-                        deviceRepository.save(device);
+                        devicesToSave.add(device);
                         updatedDevices.add(DeviceResponse.builder()
                             .id(device.getId())
                             .name(device.getName())
@@ -74,6 +75,7 @@ public class DeviceService {
                 });
             });
 
+            deviceRepository.saveAll(devicesToSave);
             //gửi tin qua websocket
             messagingTemplate.convertAndSend("/topic/device-status", updatedDevices);
             log.info("Đã đồng bộ trạng thái thiết bị từ phần cứng vào DB và đẩy qua WebSocket");
