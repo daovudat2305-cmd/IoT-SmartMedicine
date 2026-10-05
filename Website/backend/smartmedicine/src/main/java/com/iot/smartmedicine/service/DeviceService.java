@@ -2,7 +2,9 @@ package com.iot.smartmedicine.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -47,42 +49,49 @@ public class DeviceService {
     private String deviceControlTopic;
 
     //lấy trạng thái thiết bị khi mới kết nối esp32
-    @Transactional 
     public void syncAllDevicesStatus(String payload) {
         try {
             JsonNode node = objectMapper.readTree(payload);
-            List<DeviceResponse> updatedDevices = new ArrayList<>();
-            List<Device> devicesToSave = new ArrayList<>();
-
-            node.properties().forEach(entry -> {
-                String deviceId = entry.getKey();
-                String statusStr = entry.getValue().asString();
-
-                deviceRepository.findById(deviceId).ifPresent(device -> {
-                    try {
-                        device.setStatus(DeviceStatus.valueOf(statusStr.toUpperCase()));
-                        device.setUpdatedAt(LocalDateTime.now());
-                        devicesToSave.add(device);
-                        updatedDevices.add(DeviceResponse.builder()
-                            .id(device.getId())
-                            .name(device.getName())
-                            .status(device.getStatus())
-                            .updatedAt(device.getUpdatedAt())
-                            .build());
-                    } catch (IllegalArgumentException e) {
-                        log.warn("Trạng thái không hợp lệ '{}' từ ESP32 cho thiết bị '{}', bỏ qua.", statusStr, deviceId);
-                    }
-                });
-            });
-
-            deviceRepository.saveAll(devicesToSave);
-            //gửi tin qua websocket
-            messagingTemplate.convertAndSend("/topic/device-status", updatedDevices);
-            log.info("Đã đồng bộ trạng thái thiết bị từ phần cứng vào DB và đẩy qua WebSocket");
+            Map<String, String> statusMap = new HashMap<>();
+            node.properties().forEach(entry -> statusMap.put(entry.getKey(), entry.getValue().asString()));
+            // cập nhật DB trọn vẹn trong 1 Transaction
+            List<DeviceResponse> updatedDevices = updateDeviceStatusesInDb(statusMap);
+            
+            // chỉ khi DB commit thành công mới bắn WebSocket
+            if (!updatedDevices.isEmpty()) {
+                messagingTemplate.convertAndSend("/topic/device-status", updatedDevices);
+                log.info("Đã đồng bộ trạng thái thiết bị từ phần cứng vào DB và đẩy qua WebSocket");
+            }
         } catch (Exception e) {
             log.error("Lỗi khi đồng bộ trạng thái thiết bị: {}", e.getMessage());
         }
     }
+
+    @Transactional
+    public List<DeviceResponse> updateDeviceStatusesInDb(Map<String, String> statusMap) {
+        // Query 1 lần lấy toàn bộ device theo danh sách id
+        List<Device> devices = deviceRepository.findAllById(statusMap.keySet());
+        List<DeviceResponse> updatedResponses = new ArrayList<>();
+        for (Device device : devices) {
+            String statusStr = statusMap.get(device.getId());
+            try {
+                device.setStatus(DeviceStatus.valueOf(statusStr.toUpperCase()));
+                device.setUpdatedAt(LocalDateTime.now());
+                
+                updatedResponses.add(DeviceResponse.builder()
+                    .id(device.getId())
+                    .name(device.getName())
+                    .status(device.getStatus())
+                    .updatedAt(device.getUpdatedAt())
+                    .build());
+            } catch (IllegalArgumentException e) {
+                log.warn("Trạng thái không hợp lệ '{}' cho thiết bị '{}', bỏ qua.", statusStr, device.getId());
+            }
+        }
+        deviceRepository.saveAll(devices);
+        return updatedResponses;
+    }
+
 
 
     //lấy trạng thái thiết bị
