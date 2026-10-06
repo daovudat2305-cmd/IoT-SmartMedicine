@@ -4,5 +4,6 @@ import lombok.Data;
 
 @Data
 public class DeviceControlRequest {
+    private String deviceId;
     private String action;
 }

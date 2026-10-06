@@ -28,9 +28,9 @@ export const deviceApi = {
     deviceId: string,
     action: "ON" | "OFF" | string,
   ): Promise<ApiResponse<DeviceControlResponse>> => {
-    const requestBody: DeviceControlRequest = { action };
+    const requestBody: DeviceControlRequest = { deviceId, action };
     const response = await axiosClient.post<ApiResponse<DeviceControlResponse>>(
-      API_ENDPOINTS.DEVICE.CONTROL_DEVICE(deviceId),
+      API_ENDPOINTS.DEVICE.CONTROL_DEVICE,
       requestBody,
     );
     return response.data;

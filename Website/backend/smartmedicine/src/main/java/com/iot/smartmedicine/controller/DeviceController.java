@@ -42,13 +42,12 @@ public class DeviceController {
     }
     
     
-    @PostMapping("/{deviceId}/control")
+    @PostMapping("/control")
     public CompletableFuture<ApiResponse<DeviceControlResponse>> controlDevice(
-        @PathVariable("deviceId") String deviceId,
         @RequestBody DeviceControlRequest request
     ) {
         
-        return deviceService.sendControlToDevice(deviceId, request)
+        return deviceService.sendControlToDevice(request)
             .thenApply(response -> ApiResponse.<DeviceControlResponse>success(response, "Điều khiển thiết bị thành công"));
     }
     

@@ -123,7 +123,12 @@ public class DeviceService {
     }
 
     //điều khiển thiết bị
-    public CompletableFuture<DeviceControlResponse> sendControlToDevice(String deviceId, DeviceControlRequest request) {
+    public CompletableFuture<DeviceControlResponse> sendControlToDevice(DeviceControlRequest request) {
+        if (request == null || request.getDeviceId() == null || request.getDeviceId().isBlank()) {
+            throw new AppException(ErrorCode.DEVICE_NOT_FOUND);
+        }
+
+        String deviceId = request.getDeviceId().trim();
         if(pendingControls.containsKey(deviceId) || pendingControls.containsKey("all")) {
             throw new AppException(ErrorCode.DEVICE_BUSY);
         }

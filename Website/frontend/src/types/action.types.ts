@@ -2,6 +2,7 @@ export type DeviceStatus = "ON" | "OFF";
 export type ActionStatus = "success" | "pending" | "failed";
 
 export interface DeviceControlRequest {
+  deviceId?: string;
   action: string;
 }
 

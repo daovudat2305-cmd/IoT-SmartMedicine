@@ -13,7 +13,7 @@ export const API_ENDPOINTS = {
   DEVICE: {
     ALL_DEVICES: "/api/devices",
     GET_DEVICE_BY_ID: (deviceId: string) => `/api/devices/${deviceId}`,
-    CONTROL_DEVICE: (deviceId: string) => `/api/devices/${deviceId}/control`,
+    CONTROL_DEVICE: "/api/devices/control",
     CONTROL_ALL: "/api/devices/control-all",
   },
   ACTION: {
